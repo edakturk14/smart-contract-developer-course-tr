@@ -1,0 +1,233 @@
+---
+sidebar_position: 4
+---
+# Fonksiyonlar ve Kontrol Akışı
+
+## Fonksiyonlar
+
+Her Rust programında en az bir tane fonksiyon bulunur ve "main" adlı bu fonksiyon programınız için bir başlangıç noktasıdır.
+main fonksiyonu dışında da istediğimiz kadar fonksiyon oluşturabiliriz. Bir fonksiyon oluşturmak için `fn` anahtar sözcüğü
+yazıldıktan sonra fonksiyonun adı verilir.
+
+```js
+fn foo() {
+    // süslü parantez içine fonksiyonunun gövdesi (body) denir.
+}
+```
+
+Fonksiyonlar parametre alabilir, bunun için fonksiyon adından sonra parantez içerisinde aldığı parametre değerleri girilir, parametre almıyorsa
+boş bırakılır. Parametre alan fonksiyonların parametre değerlerinin tip ataması manuel olarak yapılmalıdır. Ayrıca fonksiyonlar
+bir değer de döndürebilirler, bunu için de döndürdüğü değerin tipi fonksiyon oluşturulurken mutlaka belirtilmelidir.
+
+```js
+fn foo (x: i32, y: i32) -> i32 {
+    let val = x*y;
+    val
+}
+```
+
+Yukarıdaki "foo" adlı fonksiyon "x" ve "y" adlı iki parametre alıyor, bu parametrelerin tip ataması manuel olarak yapılmış. Fonksiyonlar geriye bir
+değer döndürüyorsa süslü parantezlerle fonksiyon gövdesini açmadan önce `->` şeklinde bir ok işareti ile döndürdüğü tip yazılır. "foo" adlı
+fonksiyon yaptığı işlemlerden sonra geriye i32 tipinde bir değer döndürüyor.
+Rust'ta bir fonksiyondan döndürülen değerler için "return" anahtar sözcüğünü kullanmaya gerek yoktur. Sadece fonksiyon gövdesinin
+son satırına döndürülecek değerin kendisi yazılır. "foo" adlı fonksiyonda fonksiyon gövdesinin son satırında "val" adlı değişken geri döndürülüyor.
+Gerekli olmasa da "return" sözcüğünü kullanmak isterseniz döndürdüğünüz değişkenden sonra noktalı virgül ";" yazılmalıdır:
+
+```js
+fn foo (x: i32, y: i32) -> i32 {
+    let val = x*y;
+    return val;
+}
+```
+Son olarak foo adlı fonksiyonun main fonksiyonunda nasıl çağrılacağını görelim:
+
+```js
+fn main() {
+    let x = foo(3, 5);
+    println!("foo adlı fonksiyondan dönen sayı: {x}");
+}
+```
+Yukarıdaki kod blokunda main fonksiyonu dışında tanımladığımız "foo" adlı fonksiyonu göndermemizi beklediği iki parametre ile 
+çağırdık ve dönen değeri x değişkenine eşitleyip "println!" ile yazdırdık. 
+
+## Kontrol Akışı
+
+Kontrol akışı en basit anlamıyla yazdığınız Rust koduna farklı farklı durumlarda ne yapması gerektiğini söylediğiniz bir yapıdır.
+Diğer programlama dillerinde olduğu gibi Rust'ta da `if`, `while`, `for` gibi yaygın olarak kullanılan kontrol ifadeleri bulunur.
+Şimdi bunları sırayla Rust'ta nasıl kullandığımıza bakalım.
+
+### if
+
+Bir `if` ifadesinde farklı durumlara göre kodunuzu şekillendirirsiniz. Örneğin "şu durum olursa şunu yap, şu durum olmazsa da şunu yap" gibi.
+
+```js
+fn main() {
+    let value = 35;
+
+    if value < 12 {
+        println!("sayının değeri 12' den küçüktür.");
+    } else {
+        println!("sayının değeri 12' den büyüktür.");
+    }
+}
+```
+Yukarıdaki kodda görüldüğü gibi bir "if" ifadesi oluşturmak için `if` anahtar sözcüğünü kullanırız ve ardından da koşulumuzu yazarız.
+Eğer koşul sağlanırsa ardından gelen süslü parantez içindeki kod bloku çalıştırılır. "if" bloklarını istediğimiz kadar arttırabiliriz ve
+istediğimiz koşulların hiçbirisi sağlanmadığında devreye girmesini istediğimiz bir kod bloku varsa bunu `else` ifadesinden sonra ele alırız.
+
+```js
+fn main() {
+    let a = 12;
+
+    if a == 1 {
+        println!("sayının değeri 1");
+    } else if x == 10 {
+        println!("sayının değeri 10");
+    } else {
+        println!("sayının değeri 1 veya 10 değil");
+    }
+}
+```
+
+Yukarıdaki kod blokunda olduğu gibi birden fazla koşul olması durumunda "else if" kullanılır. Ayrıca if yapılarından dönen değeri
+bir değişkene eşitleyebildiğimiz yapılar da kullanabiliriz:
+
+```js
+fn main() {
+    let durum = true;
+
+    let sonuc = if durum { 4 } else { 8 };
+    println!("sonuçun değeri: {}", sonuc);
+}
+```
+Yukarıdaki kod blokunda "durum" adlı değişkenin değeri "true" olduğu için if ifadesinden 4 değeri döndürülür ve "sonuc"
+değişkenine eşitlenir. "sonuc" değişkenini `println!` ile yazdırırken süslü parantez içine `{sonuc}` şeklinde yazmak 
+yerine yukarıdaki gibi tırnaklı ifadenin en dışına da yazabiliriz, ikisi de aynı sonucu verecektir.
+
+### loop
+
+Bir kod blokunu birden çok kez çalışmanız gereken durumlar söz konusu olabilir. Böyle durumlarda döngüsel ifadelere başvurulur.
+Rust'ta kullanabileceğiniz döngülerden biri de `loop` dur. 
+
+```js
+fn main() {
+    loop {
+        println!("bu bir sonsuz döngüdür");
+    }
+}
+```
+Yukarıdaki kod bloku çalıştırıldığında manuel olarak programı durdurmadıkça sonsuz bir döngü içerisine girerek sürekli `println!` 
+içerisindeki ifadeyi yazdırır. Sonsuz döngüden çıkabilmek için istediğimiz yerde ya da belirlediğimiz bir koşul sağlandığında
+`break` anahtar sözcüğü kullanarak otomatik olarak döngüden çıkılabilir. Ayrıca "loop" dan dönen bir değeri bir değişkene atayabiliriz.
+
+```js
+fn main() {
+    let mut sayac = 0;
+
+    let sonuc = loop {
+        sayac += 1;
+
+         if sayac == 12 {
+            break sayac * 3;
+         }
+    };
+
+    println!("döngüden döndürülen sayı: {}",sonuc);
+}
+```
+Yukarıdaki kodda ilk önce "sayac" adlı bir değişken "mut" anahtar sözcüğü ile değiştirilebilir olarak atanıp başlangıç değeri
+0' a eşitlendi. Sonra "sonuc" adlı bir değişken tanımlanıp değeri loop' dan dönecek olan değere eşitlendi. Döngü içerisinde
+sayac adlı değişkeni her defasında bir arttırmak üzere döngüyü başlatıldı. Döngü içerisindeki if ifadesinin koşulu olan
+ "sayac" değişkeni 12'ye eşit olana kadar döngü devam ettirildi. Koşul sağlandığı anda if ifadesinin içindeki kod blokuna girilip "sayac"
+ adlı değişken ilk önce 3 ile çarpıldı ve ardından `break` ifadesinin bir gereği olarak döngüden çıkıldı ve sonuc değişkeninin değeri yazdırıldı.
+
+ ### while
+
+ Bazen bir döngüyü başlatırken ilk başta bir koşula bağlayabiliriz, böyle durumlarda `while` anahtar sözcüğü ile başlatılan döngüde
+ baştaki koşul true oldukça yani koşul sağlandığı sürece döngü devam eder,ancak false olduğunda yani koşul artık sağlanamadığında döngüden çıkılır.
+
+ ```js
+ fn main() {
+    let mut x = 8;
+
+    while x != 0 {
+        println!("sayının değeri: {}", x);
+
+        x -= 1;
+    }
+
+    println!("döngüden çıkıldı");
+ }
+ ```
+ Yukarıdaki kod blokunun anlamı: x' in değeri sıfıra eşit olmadığı sürece döngüde kal, o andaki döngüde x'in değeri ne ise onu yazdır ve 
+ x'in değerini bir eksilt, x'in değeri sıfıra eşit olduğunda ise döngüden çık ve döngüden çıkıldığı bilgisini yazdır.
+
+ ### for
+
+ `for` ile oluşturulan döngüler mantıken while ile benzerdir ancak kaç defa döndürüleceği bellidir, genellikle belli bir aralıkta çalışan döngülerde
+ ve koleksiyon tiplerde yaygın olarak kullanılır.
+
+ ```js
+fn main() {
+    let dizi = [1, 2, 3, 4, 5];
+
+    for eleman in dizi {
+        println!("dizinin elemanlarından biri {}", eleman);
+    }
+}
+```
+
+Yukarıdaki kod blokunda "dizi" adlı bir dizinin (array) her bir elemanı for döngüsü kullanarak yazdırıldı. `for eleman in dizi` ifadesinde 
+"eleman" adlı değişkene dizinin her bir elemanı sırayla atanır ve döngüye gönderilerek yazdırılır. 
+
+```js
+for i in 0..12 {
+    println!("{}",i);
+}
+```
+
+Yukarıdaki kod blokunda Rust'a has bir söz dizimi (syntax) var. Diğer dillerde `for (x = 0; x < 12; x++)` gibi bir ifade ile yazacağımız
+koşulu Rust'ta çok daha sade ve anlaşılır bir şekilde `for i in 0..12` olarak yazabiliriz. `0..12` bir aralığı temsil eder ve 
+ilk değerinin 0 olduğunu ve bu sayıların 12'ye kadar arttığını belirtir.
+
+### match
+
+Bazı koşullu durumlarda if/else yapısıyla kurulan kontrol akışı ifadeleri oldukça karmaşık ve uzun bir yapıya bürünebilir ve kodun
+anlaşılırlığını da azaltır. Böyle durumlarda Rust'ta `match` anahtar sözcüğü ile oluşturulan yapıyı kullanmak çok daha temiz bir kod ve
+güçlü bir kontrol akışı kurmanıza olanak tanır.
+
+```js
+fn main() {
+    let a = 3;
+
+    match a {
+        1 => println!("sayının değeri bir"),
+        2 => println!("sayının değeri iki"),
+        3 => println!("sayının değeri üç"),
+        _ => println!("başka bir şey"),
+    }
+}
+```
+Yukarıdaki kodda 3'e eşit olan a değişkenini `match` yapısında kontrol ediyoruz, başka bir deyişle a değişkenini bir eşleşmeye (match)
+sokuyoruz. Bunun için `match` anahtar sözcüğünün yanına kontrol edeceğimiz "a" değişkenini yazıp bir kod bloku {} açıyoruz. Kod blokunun içinde
+a'nın olabileceği değerleri yazıp `=>` şeklinde yazılan bir ok işareti çekerek o değere eşit olması durumunda yapılması istenen kod
+ifadesini yazıyoruz. Bu kodda a'nın değeri 3 olduğundan "sayının değeri üç" metni yazdırılır ve `match` döngüsünden çıkılır. Hiçbir eşleşmenin
+olmadığı durumlarda ne yapması gerektiğini `_` işareti ile belirleriz, yani bu ifade if/else yapısındaki 'else' durumuna benzer.
+
+Aynı durum aşağıdaki kod blokunda olduğu gibi if/else yapısıyla da ele alınabilir.
+
+```js
+fn main() {
+    let a = 3;
+
+    if a == 1 {
+        println!("sayının değeri bir");
+    } else if a == 2 {
+        println!("sayının değeri iki");
+    } else if a == 3 {
+        println!("sayının değeri üç");
+    } else {
+        println!("başka bir şey");
+    }
+}
+```

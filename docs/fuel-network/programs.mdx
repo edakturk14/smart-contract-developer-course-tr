@@ -1,0 +1,278 @@
+---
+sidebar_position: 3
+---
+# Sway Program Türleri
+
+Fuel ekosisteminde geliştirme yaparken kullanılabilecek dört farklı program türü vardır, bunlar:
+
+- contract
+- library
+- script
+- predicate
+
+Bu dört farklı programın her birinin kendine has özellikleri bulunur ve bir Sway programı oluşturulurken bu dört ayrı türden hangisi olduğu
+mutlaka belirtilmelidir. İlk üç tür blokzincire deploy edilebilir ancak `library` doğrudan deploy edilemez, sadece aynı kodların tekrar tekrar
+kullanılabilmesini sağlayan bir yapıdır.
+
+Bir projede birden fazla `library` olabilir ancak sadece bir tane `contract`,`script` veya `predicate` tanımlanabilir. `script` ve `predicate`
+içerisinde `main` fonksiyonu mutlaka olmalıdır çünkü bunlar derleme aşamasında entrypoint yani başlangıç noktası olarak iş görürler, `contract` ise
+main fonksiyonuna gerek duymaz. Şimdi bu dört farklı program türünü ayrıntılarıyla ele alalım.
+
+## Contract
+
+`contract` ile tanımladığımız akıllı kontratlar bytecode'lardan oluşan ve bir transaction (işlem) ile blokzincire deploy edilen programlardır. Aslında
+`script` ve `predicate`'lar da bu yönüyle `contract` 'lara benzer ancak onlardan farklı olarak kontratlar yeninden çağrılabilirler ve state içerirler, yani
+veri tabanı olan deploy edilmiş bir API gibidir.
+
+Her Sway programında olduğu gibi kontratlarda da ilk önce ne tür bir program türü olduğu belirtilmelidir ve İçerisinde mutlaka bir ABI tanımlanmalı
+ve bu tanımlanan ABI implement edilmelidir. ABI tanımlamasını ayrı bir dosyada `library` olarak oluşturup kontrat içerisine
+çağırmak (import) her zaman tavsiye edilen bir yöntemdir. Bunu yapmak oldukça basittir, hemen bir library oluşturarak nasıl yapıldığını ele alalım:
+
+```js
+library abi_wallet;
+
+abi Wallet {
+
+    #[storage(read,write)]
+    fn take_fund();
+
+    #[storage(read,write)]
+    fn send_fund(amount: u32, receiver: Address);
+}
+```
+
+Bir library (kütüphane) tanımlamak için ilk önce `library` anahtar sözcüğü yazılır, ardından da adı yazılır. Yukarıda "abi_wallet" adında bir
+library tanımladık ve bir sonraki satırlarda bir önceki bölümde yaptığımız gibi "Wallet" adında bir ABI tanımladık. Bu ABI iki fonksiyondan
+oluşmakta ve ikisi de storage değişkenlerini okuyup yazma (değiştirme) yetkisine sahip. Ayrıca "send_fund" adlı fonksiyon kendisine iki parametre
+almakta ve Rust'ta olduğu gibi bu parametrelerin adları ve tip atamaları yapılmış.
+
+Wallet adlı ABI artık bir contract ya da script içerisine import edilerek (çağrılarak) kullanılabilir. Bunun için `use` anahtar sözcüğü kullanılır.
+
+```js
+use abi_wallet::Wallet;
+```
+Böylece kontratımızda kullanacağımız ABI'ı çağırmış olduk ve kontrat içerisinde implement ederek (işleyerek) kullanabiliriz.
+
+```js
+contract;
+
+use abi_wallet::Wallet;
+
+storage [
+    // ...
+]
+
+impl Wallet for Contract {
+    #[storage(read, write)]
+    fn take_fund() {
+        // ...
+    }
+
+    #[storage(read, write)]
+    fn send_fund(amount: u32, receiver: Address) {
+        // ...
+    }
+}
+```
+
+Yukarıda görüldüğü üzere artık kontrat içerisinde ABI tanımlaması yok, ayrı bir dosyada `library` olarak oluşturup kontratımıza çağırarak
+sadece implement ettik. `// ...` ile gösterdiğimiz yorum satırları o programın kodlarını temsil etmekte, ana konuya odaklanmak adına şimdilik
+bu şekilde gösterildi.
+
+## Library
+
+Library yani kütüphaneler bir kere yazıldığında diğer programlar tarafından ortak olarak kullanılabilecek işlevselliği tanımlamak için kullanılır.
+Kütüphanelere en iyi örnekler olarak "[Sway Standard kütüphanesi](https://github.com/FuelLabs/sway/tree/master/sway-lib-std)" ve
+"[Rust Standard Kütüphanesi](https://doc.rust-lang.org/std/)" gösterilebilir. Bu iki kütüphanede o dil için önceden tanımlanmış ortak
+işlevsellik sunan birçok araç bulunur. Örneğin Sway'de daha önce kullandığımız "`storage`" aslında önceden tanımlanmış bir `library`'dir ve
+tekrar tekrar kullandığımız, verilerin içinde depolandığı bir standard kütüphane ögesidir.
+
+Bir kütüphaneyi tanımlamak için `library` anahtar sözcüğü kullanılır ve ardından da o kütüphanenin adı yazılır. Bütün Sway programlarında olduğu
+gibi bu tanımlama dosyanın en başına yazılır.
+
+```js
+library my_wallet;
+
+// ...
+```
+
+Şimdi Sway Standard Kütüphanesi'nde mevcut bir library olan [Result](https://github.com/FuelLabs/sway/blob/master/sway-lib-std/src/result.sw)'ın kaynak kodlarını
+inceleyelim. `Result` tıpkı Rust'ta olduğu gibi hataları işleyebilmek için çok yaygın olarak kullanılan bir enum'dır. Yapılan işlemin başarılı ya da hatalı olması
+durumlarına karşı farklı değerler döndürür.
+
+```js title="result.sw"
+library;
+
+use ::revert::revert;
+
+pub enum Result<T, E> {
+    Ok: T,
+    Err: E,
+}
+```
+Yukarıda görüldüğü üzere ilk önce `library` anahtar sözcüğü yazılarak program türü tanımlanmış, ardından yine standard kütüphaneden başka bir
+library olan `revert` çağrılarak kütüphaneye dahil edilmiş, sonra da Result adlı enum oluşturulup
+içerdiği iki farklı değer girilmiş.
+
+Daha sonra aşağıda görüldüğü gibi `impl` anahtar sözcüğü ile Result implement edilerek  metotları tanımlanmış.
+Bu metotların ne işe yaradığını comment (yorum) satırlarında okuyabilirsiniz.
+
+```js title="result.sw"
+impl<T, E> Result<T, E> {
+
+    // Result 'Ok' ise true döndüren method
+    pub fn is_ok(self) -> bool {
+        match self {
+            Result::Ok(_) => true,
+            _ => false,
+        }
+    }
+
+    // Result 'Err' ise true döndüren method
+    pub fn is_err(self) -> bool {
+        match self {
+            Result::Ok(_) => false,
+            _ => true,
+        }
+    }
+
+    // 'Ok' hangi değeri içeriyorsa onu döndüren method
+    pub fn unwrap(self) -> T {
+        match self {
+            Result::Ok(inner_value) => inner_value,
+            _ => revert(0),
+        }
+    }
+
+    // 'Ok' hangi değeri içeriyorsa onu döndüren yada girilen 'default' değeri döndüren method
+    pub fn unwrap_or(self, default: T) -> T {
+        match self {
+            Result::Ok(inner_value) => inner_value,
+            Result::Err(_) => default,
+        }
+    }
+```
+
+Result kütüphanesi içerisindeki `Result<T,E>` artık `use std::result::Result` şekilde yazılarak başka Sway projelerinde çağrılabilir ve bütün
+metotlarına erişilebilir. Ancak `Result` zaten Sway standard kütüphanesinde önceden belirlenmiş "prelude" adlı belirli araçlardan birisi
+olduğundan proje içerisine  otomatik olarak dahil edilir ve `use` anahtar sözcüğü kullanılarak çağrılmaya gerek kalmadan doğrudan kullanılabilir.
+Bu prelude (başlangıç) araçlarının tam listesi için [buraya](https://github.com/FuelLabs/sway/blob/master/sway-lib-std/src/prelude.sw) göz atabilirsiniz.
+
+### Kütüphanelerin kullanımı
+
+Kütüphaneleri projedeki konumlarına ve nasıl çağrıldıklarına göre iki farklı şekilde sınıflandırabiliriz. Bunlardan ilki projenin `src` dosyasında
+tutulan (internal library) kütüphanelerdir. Aşağıdaki proje dosya ağacında "my_library" adlı kütüphane "src" dosyasının içerisinde tanımlı:
+
+- "fuel-project"
+- name="Cargo.toml"
+- name="Forc.toml"
+- name="src"
+- name="main.sw"
+- name="my_library.sw"
+
+Bu şekilde konumlandırılan bir kütüphane `main.sw` içerisinde kullanılmak istendiğinde aşağıdaki gibi çağrılır:
+
+```js title="main.sw"
+dep my_library;
+
+use my_library::send_fund;
+
+// ...
+```
+`dep` anahtar sözcüğü ve ardından kütüphane adı yazılarak o kütüphane bir dependency (bağımlılık) olarak "main.sw" içerisine dahil edilir.
+Dahil edilen kütüphane içerisindeki herhangi bir özellik ise tıpkı Rust'ta olduğu gibi `use` anahtar sözcüğü ve `::` ile çağrılarak dosya içerisinde
+kullanılmaya başlanabilir.
+
+Kütüphaneler aşağıdaki gibi `src` dosyası dışında da (external library) konumlandırılabilirler.
+
+- "root"
+- "fuel-project"
+- name="Cargo.toml"
+- name="Forc.toml"
+- name="src"
+- name="main.sw"
+- name="external_library"
+- name="Cargo.toml"
+- name="Forc.toml"
+- name="src"
+- name="lib.sw"
+
+Esas proje klasörü olan "fuel-project" klasörünün dışında tanımlanan "external_library" adlı kütüphanenin dependency (bağımlılık) olarak ana projeye
+dahil edilmesi gerekir, bunun için ilk önce "fuel-project" klasörü içerisinde yer alan `Forc.toml` dosyası içerisindeki `dependencies` bölümünde kütüphanenin
+dosya yolu yani `path` yazılır:
+
+```js title="fuel-project/Forc.toml"
+[dependencies]
+external_library = { path = "../external_library" }
+```
+
+Bu aşamadan sonra kütüphane dosyası içerisindeki özellikler projeye yine `use` anahtar sözcüğü ve `::` kullanılarak çağrılır.
+
+```js title="main.sw"
+use my_library::send_fund;
+
+// ...
+```
+Artık kütüphaneler ile çalışmaya hazırsınız. Fuel uygulamaları geliştirirken kullanabileceğiniz FuelLabs tarafından hazırlanmış birtakım
+kütüphaneler için [buraya](https://github.com/FuelLabs/sway-libs/) göz atabilirsiniz.
+
+## Script
+
+Script (komut satırı), zincir üzerinde (on-chain) bulunan çalıştırılabilir bytecode'lardır ve birtakım görevleri yerine getirmesi için çalıştırılırlar, bir kontrat
+tarafından çağrılamazlar ancak kontratları çağırabilirler ve geriye tek bir değer döndürebilirler. Kalıcı bir depolamaya (storage) sahip değillerdir
+çünkü yalnızca transaction (işlem) esnasında var olurlar.
+
+EVM (Ethereum Sanal Makinesi) ile yapılan transaction'lar (işlemler) bir kontratı doğrudan çağırabilirler, ancak Fuel ile yapılan transaction'larda kontratı
+doğrudan çağırmak yerine bir `script` çalıştırılır. EVM'de yalnızca bir kontrat çağrılabilse de Fuel ile bir veya daha fazla kontrat çağırmak mümkündür.
+
+```js
+script;
+
+use std::constants::ZERO_B256;
+use wallet_abi::Wallet;
+
+fn main() {
+    let contract_address = 0x9299da6c73e6dc03eeabcce242bb347de3f5f56cd1c70926d76526d7ed199b8b;
+    let caller = abi(Wallet, contract_address);
+    let amount_to_send = 200;
+    let recipient_address = Address::from(0x9299da6c73e6dc03eeabcce242bb347de3f5f56cd1c70926d76526d7ed199b8b);
+    caller.send_funds {
+        gas: 10000,
+        coins: 0,
+        asset_id: ZERO_B256,
+    }(amount_to_send, recipient_address);
+}
+```
+
+Yukarıdaki kodlarda bir kontratı çağıran script (komut satırı) bulunmakta. Her Sway programında olduğu gibi dosyanın ilk satırına
+bunun bir "script" dosyası olduğu belirtilir. Bir script dosyasında başlangıç noktası (entrypoint) olarak her zaman bir `main` fonksiyonu bulunur ve
+bu fonksiyon içerisinde script dosyası içerisindeki başka fonksiyonlar çağrılabilir. Aynı zamanda `abi cast` işlevselliği ile başka kontratlar da
+çağrılabilir. Yukarıdaki kodlarda `let caller = abi(Wallet, contract_address);` satırında bu işlem yapılarak "Wallet" adlı kontrat çağrılmakta.
+Aslında çoğu durumda kontratların çağrılması işlemi bir arayüzden yapılsa da bazı durumlarda script içerisinden de gerçekleştirilebilir.
+
+## Predicates
+
+Sway programlama dilinde `predicate`' lar belirli bir koşul yada koşullar yerine getirildiğinde geriye bir mantıksal (boolean) değer döndüren programlardır.
+Kontratların veri depolarına (storage) erişimleri yoktur. Aşağıdaki programda geriye sadece `true` değeri döndüren basit bir predicate tanımlanmış.
+Predicate' lar da mutlaka bir `main` fonksiyonu içermelidir.
+
+```js
+predicate;
+
+fn main() -> bool {
+    true
+}
+```
+
+Predicate'lar Fuel üzerinde gerçekleştirilecek bir transaction (işlem) için imza mekanizması olarak kullanılırlar. Ethereum üzerinde
+Ether transferi gerçekleştirmek ya da bir akıllı kontratı çağırmak için "private key" yani özel anahtar mekanizması kullanılır. Fuel üzerinde bu işlemi
+gerçekleştirmek için ise `predicate` lardan faydalanılır.
+
+Predicate'lar tıpkı bir adres gibidir, herkesin bildiği üzere `0x....` şeklinde başlayıp devam eden adreslerden farkı yoktur, ancak bir cüzdan hesabı gibi de
+görülmemelidir çünkü transaction (işlem) için verilen inputlardan biridir. Predicate'lar bir private key ile oluşturulmazlar, yukarıdaki kod örneğinde olduğu gibi amacına
+uygun şekilde yazılıp derleyici (compiler) ile derlenerek bytecode'u oluşturulur ve bu bytecode'un hash'i ile meydana getirilirler. Zincir üzerinde
+deploy edilmezler (yayımlanmazlar) ve sadece transaction içerisindeki dataya erişimleri vardır. Bir predicate'a coin gönderilebilir ya da ondan coin alınabilir,
+üzerindeki coin'lere erişmek için yapılması gereken tek şey o predicate'ın true döndürmesini sağlayacak bir transaction oluşturmaktır.
+
+Örneğin belli bir miktar tokenin belli bir kullanıcıya transfer edileceği bir işlem düşünün ve bunun için bir predicate tanımlansın. Eğer predicate koşulu olan belli miktar ve
+belli kullanıcıya transfer şartlarının yerine getirildiği bir transaction gerçekleştirilirse bu predicate true döndürür ve işlemi imzalayarak transferin gerçekleşmesini sağlar.

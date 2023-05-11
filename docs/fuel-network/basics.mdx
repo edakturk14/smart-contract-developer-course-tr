@@ -1,0 +1,319 @@
+---
+sidebar_position: 4
+---
+# Sway Dilinin Temel Kavramları
+
+Sway programlama dili Fuel sanal makinesi (FuelVM) için geliştirilmiştir ve syntax (söz dizimi) olarak Rust'a çok benzer.
+Yapısal ve işlevsel olarak da Rust'a çok benzer ancak Solidity'den de ilham alınan yönleri mevcuttur. Güvenli ve performanslı
+bir akıllı kontrat geliştirme olanağı sağlamak amacıyla geliştirilmiştir.
+
+## Değişkenler
+
+Sway'de değişken atamaları `let` anahtar sözcüğü ile yapılır. Değişkenler varsayılan (default) olarak `immutable` yani değiştirilemezdir.
+
+```js
+let my_var = 8;
+```
+
+Yukarıda değeri 8'e eşit olan "my_var" adında bir tam sayı (integer) tanımladık. Tam sayılarda eğer tip ataması yapılmazsa varsayılan olarak `u64`
+olarak atanırlar.
+
+```js
+let mut my_var: u32 = 8;
+my_var = 10;
+```
+
+Yukarıda aynı değişkenin tip atamasını manuel olarak `u32` atadık ve`mut` anahtar sözcüğü ile değiştirilebilir (mutable) kılıp değerini 10'a eşitledik.
+
+## Sabitler (Constants)
+
+Sway'de de tıpkı Rust'ta olduğu gibi sabit değerli (constant) değerler atanabilir. Bunun için `Forc.toml` adlı manifest dosyasında ilgili bölümde tanımlanıp
+kullanılabilir hale gelirler.
+
+```js title="Forc.toml"
+[constants]
+my_contract_address = { type= "b256", value="0x373746fjfkgktkbkfkkg499r9r94eıgkrg9e09t9ıg" }
+my_variable = { type="u64", value="61" }
+my_bool = { type="bool", value="true" }
+```
+
+Yukarıda görüldüğü gibi bir constant tanımlamak için iki şey gereklidir: birincisi o sabitin `type` yani tipi, ikincisi de o sabitin değeri yani `value`.
+Tanımlanan sabitler artık tanımlandığı `Forc.toml` dosyasını manifest dosyası olarak alan programda kullanılabilir hale gelirler:
+
+```js
+script;
+
+fn main() {
+    let my_addr = my_contract_address;
+
+    return if my_bool { my_variable } else { 28 };
+}
+```
+Yukarıdaki kod blokunda görüldüğü gibi manifest dosyasında tanımlanan sabitler herhangi bir import (çağırma) işlemi 
+yapılmadan doğrudan programda kullanıldı. 
+Sabitler şimdilik sadece primitive (ilkel) tipler için tanımlanabilir olsa da gelecekte yapılacak güncellemelerle değişikliğe uğrayacak.
+
+## Primitive (İlkel) Tipler
+
+Sway programlama dilinde her değerin mutlaka bir tipi olmak zorundadır, derleme zamanında Sway bu değerlerin tiplerinin ne olduğunu bilmek ister.
+manuel olarak tip ataması yapılmamışsa derleyici bir çıkarım yaparak varsayılan tip atamasını o değere atayacaktır.
+
+Sway yedi farklı ilkel tipe sahiptir, bunlar:
+
+- **u8**  (8-bit işaretsiz tam sayı)
+- **u16**  (16-bit işaretsiz tam sayı)
+- **u32**  (32-bit işaretsiz tam sayı)
+- **u64**  (64-bit işaretsiz tam sayı)
+- **str[]**  (sabit uzunluklu string yani dize)
+- **bool**  (Boolean (mantıksal) true ya da false)
+- **b256**  (256 bit (32 bayt) yani hash)
+
+Yukarıdaki tipler Sway kütüphanesindeki yerleşik (built-in) tiplerdir. Tasarımsal olarak Sway'de Rust'ın aksine işaretli (signed) ve kayan noktalı
+(floating-point) tipler tanımlanmamıştır çünkü bunların kullanım alanı azdır, bu sebeple spesifik kullanımlar için uygulanması dış kütüphanelere bırakılmıştır.
+
+İşaretsiz tam sayılarda (unsigned integer) varsayılan tip `u64` olarak tanımlanmıştır ve ikilik (binary), altılık (hexadecimal) ve onluk (base-10) gibi farklı tabanlarda ataması yapılabilir:
+
+```js
+0xffffff    // altılık (hexadecimal)
+0b10101010  // ikilik (binary)
+10          // onluk (base-10)
+```
+
+Ayrıca okunurluk açısından bu tür numerik sayılar alt çizgi `-` ile ayrılarak da gösterilebilir, derleyici bu alt çizgileri görmezden gelir:
+
+```js
+100_000
+0x1111_0000
+0xfff_aaa
+```
+
+Boolean yani mantıksal tip değişkenler iki farklı değer alabilir, bunlar `true` ve `false`. Ayrıca ünlem işareti (!) ile bu iki değer birbiri
+arasında dönüştürülebilir. Aşağıda true olarak atanan bir değer ünlem işareti kullanılarak false yapılıp fonksiyondan geri döndürülüyor:
+
+```js
+fn false_conversion() -> bool {
+    let my_val: bool = true;
+    !my_val
+}
+```
+
+String yani dize tipi Sway'de statik uzunluklu olarak tanımlanmıştır, boyutu aynı zamanda onun tipinin bir ögesidir. Derleme zamanında derleyicinin
+bellekte ne kadar yer ayıracağını bilmesi açısından bu gereklidir. Aşağıdaki kodda görüldüğü şekilde tanımlanırlar:
+
+```js
+let my_val: str[4] = "sway";
+```
+Yukarıdaki "my_val" adlı değişkenin değeri olan "sway" 4 harfli olduğu için tipi `str[4]` olarak tanımlanır.
+
+## Bileşik (compound) tipler
+
+Bileşik tipler birden fazla değere sahip olan ve bu değerlerin tek bir tipte tanımlandığı tiplerdir, Sway iki farklı bileşik tipe sahiptir:
+
+- Tuple (demet)
+- Array (dizi)
+
+Tuple, bir veya birden fazla aynı veya farklı türde değerlerin tek tipte toplanmasıyla oluşturulur.
+
+```js
+let my_val: (u64, u64) = (28,61);
+```
+
+Yukarıda bir tuple tanımlanmış, tuple değerleri ve tip ataması parantez () içerisinde yazılır. Tip atamaları yapılırken değerlerin sırasına dikkat edilmelidir.
+Aşağıda farklı tiplere sahip bir tuple tanımlaması yapılmış ve tipleri değerlerinin sırasına göre belirtilmiş:
+
+```js
+let x: (u32, bool) = (34, true);
+let first = x.0;
+let second = x.1;
+```
+
+Yukarıda x değişkeni (u32, bool) şeklinde iki farklı alt tipten oluşan bir tuple. Tuple elemanlarına erişmek için indeksleme yöntemi kullanılır.
+Bunun için sıfırdan başlanarak indeks numarasına göre sırayla tuple değerlerine erişilebilir, yani `x.0` değeri "34" ve `x.1` değeri ise "true" olur.
+Ayrıca "destructuring" yani parçalama yöntemi ile de tuple değerlerine erişilebilir:
+
+```js
+let x: (u32, u64, bool) = (30, 12, true);
+let (a, b, c) = x;
+
+let y: (u64,) = (36,);
+```
+Yukarıda a, b ve c değişkenlerinin değeri destructuring yöntemiyle parçalanarak sırasıyla 30, 12 ve *true* olarak atanır. Son satırdaki "y" değişkeninde ise
+tek bir değeri olan tuple tanımlanmış, yani eğer tek değeri olan bir tuple oluşturmak istenirse hem tip ataması hem de değeri yazılırken virgül konulmalıdır.
+
+Array yani diziler de tuple gibidir ancak farklı olarak dizilerin bütün değerleri aynı tipten oluşmalıdır. Aşağıdaki gibi köşeli parantez [] içerisinde değerleri
+virgülle ayrılarak oluşturulurlar.
+
+```js
+let my_array: [u64; 6] = [1, 2, 3, 4, 5, 6];
+```
+
+Sway'de diziler belleğin `stack` adlı bölümünde tutulurlar çünkü boyutları her zaman sabittir, bir kere tanımlandıktan sonra boyutu değiştirilemez, yeni elemanlar
+eklenemez veya çıkartılamaz. Tip ataması yapılırken köşeli parantez içerisine ilk önce dizi elemanlarının tipi yazılır ikinci olarak da eleman sayısı noktalı virgül (;)
+ile ayrılarak yazılır. Yukarıdaki "my_array" adlı dizinin tipi `[u64; 6]` olarak tanımlanmış.
+
+```js
+let mut my_array: [u64; 6] = [1, 2, 3, 4, 5, 6];
+let first = my_array[0];
+my_array[1] = 9;
+```
+
+Dizi elemanlarına erişim yine indeksleme yöntemiyle ve köşeli parantez kullanılarak yapılır. Yukarıdaki dizinin ilk elemanına erişmek için `my_array[0]` yazılır.
+Eğer dizi `mut` anahtar sözcüğü ile değiştirilebilir kılınmışsa dizi elemanlarının değeri indeksleme ile değiştirilebilir. Yukarıdaki kod blokunda
+dizi tanımlanırken `mut` ile değiştirilebilir kılındığından birinci indeksteki elemanının değeri `my_array[1] = 9;` ifadesi ile 9' a eşitlenmiş. 
+
+## Sıklıkla kullanılan Sway tipleri
+
+Sway Standard Kütüphanesi içerisinde belirli amaçlar ve konseptler için geliştirilmiş birden çok modül bulunmaktadır. Bunların içerisinde yer alan özelleştirilmiş
+iki farklı tipi ele alacağız, bunlar:
+
+- `Result<T,E>`
+- `Option<T>`
+
+### `Result<T,E>`
+
+`Result` tipi iki farklı değerden oluşan bir enum'dır, ilk değeri olan `Ok(T)` eğer başarılı bir sonuç döndürülürse çalışır ve içerisindeki `T` değerini döndürür,
+ikinci değeri ise `Err(E)` dir ve hata alınması durumunda içerisindeki `E` değerini döndürür. Bu enum tıpkı Rust'ta olduğu gibi hata ile karşılaşılabilecek
+durumlarda işleyip geriye anlamlı bir sonuç döndürmek için kullanılır.
+
+```js
+pub enum Result<T, E> {
+    Ok: T,
+    Err: E,
+}
+```
+
+Aşağıdaki örnekte `multiply` adlı fonksiyon iki değer alıp bunların çarpımını geriye döndürüyor, ancak aldığı parametrelerden ikisi de sıfıra eşitse hata olacağından
+bu hatayı işlemek için `Result` kullanıp dönen değeri hata ya da başarılı olma durumuna göre ele alıyoruz.
+
+```js
+script;
+
+enum HandleError {
+    MultiplyTwoZero: (),
+}
+
+fn multiply(x: u64, y: u64) -> Result<u64, HandleError> {
+    if (x == 0 && y == 0) {
+        return Result::Err(HandleError::MultiplyTwoZero);
+    } else {
+        Result::Ok(x * y)
+    }
+}
+
+fn main() -> Result<u64, str[6]> {
+    let result = multiply(20, 2);
+    match result {
+        Result::Ok(val) => Result::Ok(val),
+        Result::Err(HandleError::MultiplyTwoZero) => Result::Err("Failed"),
+    }
+}
+```
+
+### `Option<T>`
+
+`Option` tipi iki farklı ögesi olan bir enum'dır, birinci ögesi olan `Some` bir değeri temsil eder ve içerisindeki değer ne ise geriye onu döndürür, ikinci ögesi
+olan `None` ise hiçbir değerin döndürülmemesi durumunu sembolize eder. Özellikle bir değişkene başlangıç değeri atamak ve hata işleme durumlarında kullanılırlar.
+
+```js
+pub enum Option<T> {
+    None: (),
+    Some: T,
+}
+```
+
+Aşağıdaki örnekte `divide` adlı fonksiyon iki parametre alarak bölme işlemi yapıp Option ile geriye döndürüyor, eğer hatalı bir işlem olursa Option
+içerisindeki `None` değerini döndürüyor, başarılı bir işlem olursa da sonucunu `Some` ile döndürüyor.
+
+```js
+script;
+
+fn divide(numerator: u64, denominator: u64) -> Option<u64> {
+    if denominator == 0 {
+        Option::None
+    } else {
+        Option::Some(numerator / denominator)
+    }
+}
+
+fn main() {
+    let result = divide(9, 3);
+
+    match result {
+        Option::Some(x) => std::logging::log(x),
+        Option::None => std::logging::log("Cannot divide by 0"),
+    }
+}
+```
+
+## Blokzincir tipleri
+
+Sway programlama dili blokzincirine has bir dil olduğundan, standart kütüphanesinde bu alan için özelleştirilmiş birtakım tipler de içermektedir. Bunlar:
+
+- Address
+- ContractId
+- Identity
+
+### `Address`
+
+`Address` tipi primitive (ilkel) tiplerden biri olan `b256` üzerinde güvenli bir sarmalayıcı olarak işlev görür, bir public anahtarın ya da bir predicate'in
+hash değerini ifade eder ve deploy edilmiş (yayımlanmış) bir akıllı sözleşmeye referans olamazlar.
+
+```js
+pub struct Address {
+    value: b256,
+}
+```
+
+`b256` ve `Address` tipleri arasında tip dönüşümü (casting) yapılabilir:
+
+```js
+let my_num: b256 = 0x000000000000000000000000000000000000000000000000000000000000002A;
+let my_addr: Address = Address::from(my_num);
+let forty_two: b256 = my_addr.into();
+```
+
+### `ContractId`
+
+`ContractId` tipi primitive (ilkel) tiplerden biri olan `b256` üzerinde güvenli bir sarmalayıcı olarak işlev görür, EVM'deki kontrat adreslerine benzeyen
+bir tanımlayıcı (id) işlevi görürler.
+
+```js
+pub struct ContractId {
+    value: b256,
+}
+```
+`b256` ve `ContractId` arasında tip dönüşümleri (casting) aşağıdaki gibi yapılabilir:
+
+```js
+let my_number: b256 = 0x000000000000000000000000000000000000000000000000000000000000002A;
+let my_contract_id: ContractId = ContractId::from(my_number);
+let forty_two: b256 = my_contract_id.into();
+```
+
+### `Identity`
+
+`Identity` tipi hem `Address` hem de `ContractId` tiplerini bir arada ele alan bir enum'dır, iki tipin de kabul edilebilir olduğu durumlarda kullanışlı olabilir.
+Örneğin kimliği belli bir göndericiden gelen fonları alırken göndericinin bir adres ya da kontrat olup olmadığının önemi olmayan durumlar gibi.
+
+```js
+pub enum Identity {
+    Address: Address,
+    ContractId: ContractId,
+}
+```
+
+`Identity` için tip dönüşümleri aşağıdaki gibi yapılabilir:
+
+```js
+let raw_address: b256 = 0xddec0e7e6a9a4a4e3e57d08d080d71a299c628a46bc609aab4627695679421ca;
+let my_identity: Identity = Identity::Address(Address::from(raw_address));
+```
+
+Bir `Identity` içerisindeki `Address` ya da `ContractId` yi döndürmek için `match` ifadesi kullanılabilir:
+
+```js
+let my_contract_id: ContractId = match my_identity {
+    Identity::ContractId(identity) => identity,
+     _ => revert(0),
+};
+```

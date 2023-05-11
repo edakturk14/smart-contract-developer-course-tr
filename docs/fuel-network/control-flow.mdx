@@ -1,0 +1,360 @@
+---
+sidebar_position: 5
+---
+# Fonksiyonlar ve Kontrol Akışı
+
+## Fonksiyonlar
+
+Fonksiyonlar `fn` anahtar sözcüğü kullanılarak tanımlanırlar. Parametre aldıklarında ve geriye bir değer döndürdüklerinde tip ataması yapılmalıdır.
+
+```js
+fn equals(first: u64, second: u64) -> bool {
+    first == second
+}
+
+fn main() {
+    equals(2,2); // true döndürür
+    equals(3,5); // false döndürür
+}
+```
+Yukarıda `equals` adlı bir fonksiyon tanımlı, iki parametre alıyor ve tip ataması `u64` olarak yapılmış, geriye mantıksal bir değer döndürdüğünden dönüş tipi
+olarak `bool` atanmış. Kendisine verilen parametrelerin eşit olup olmama durumuna göre geriye `true` ya da `false` döndürüyor.
+
+Fonksiyon parametreleri de varsayılan olarak değiştirilemez olduğundan değiştirilebilir kılmak için parametre adından sonra `ref mut` eklenmelidir:
+
+```js
+fn increment(ref mut num: u32) {
+    let prev = num;
+    num = prev + 1u32;
+}
+```
+Yukarıdaki fonksiyonda `num` adlı parametre `ref mut` anahtar sözcüğü ile değiştirilebilir olarak atandığından değerini değiştirebildik. Ayrıca `ref` anahtar sözcüğü
+ile fonksiyon dışında da değeri değiştirilmiş olarak erişebiliriz.
+
+```js
+let mut num: u32 = 6;
+increment(num);
+assert(num == 7); // assert() içerisindeki ifade doğru olduğunda true döndüren bir test aracıdır.
+```
+Şu anda `ref` ve `mut` anahtar sözcüklerinin ayrı ayrı kullanımı mümkün değildir, sadece `ref mut` olarak birlikte kullanılabilir.
+
+## Struct
+
+Struct birden fazla aynı ya da farklı tipte ve birbiriyle ilişkili değerlerin bir arada olarak tek bir çatı altında tutulduğu veri tipidir. Sway dilinde de tıpkı
+Rust ve diğer programlama dillerinde olduğu gibi yaygın olarak kullanılırlar.
+
+```js
+pub struct User {
+    active: bool,
+    username: String,
+    email: String,
+    sign_in_count: u64,
+}
+````
+Yukarıdaki kod blokunda bir kullanıcı hesabı hakkındaki verilerin bir arada tutulduğu "User" adlı bir struct tanımlanmış. `pub` anahtar sözcüğü ile diğer 
+programlar tarafından da erişilebilir kılınmış.
+
+Struct içerisindeki veriler aynı yada farklı tipte olabilir, hatta bir verinin tipi başka bir struct da olabilir. Bir struct tanımlandıktan sonra o struct tipinde
+değerler oluşturmanın birden farklı yolu vardır.
+
+```js
+pub struct Point {
+    x: u64,
+    y: u64,
+}
+
+let mut first = Point {
+    x: 34,
+    y: 61,
+};
+
+first.x = 56;
+```
+
+Yukarıda "Point" adlı bir struct tanımladık o "first" adlı bir değişkeni o struct tipinde oluşturup içerisindeki verilerin değerlerini atadık. `mut` anahtar
+sözcüğü ile değiştirilebilir kıldığımız için nokta notasyonuyla "x" değişkenine erişip değerini değiştirebildik.
+
+```js
+let x_val = 28;
+let y_val = 52;
+
+let mut second = Point {
+    x: x_val,
+    y: y_val,
+};
+
+let x = 12;
+let y = 5;
+
+let mut third = Point { x, y };
+```
+Yukarıdaki kod blokunda ikinci bir yol ile struct örneği oluşturulmuş. Değişkenler struct dışında tanımlanarak daha sonra Point struct'ının içerisindeki 
+değişkenlere atanıyor. Üçüncü yolda ise eğer struct içerisindeki değişkenler ile aynı adda tanımlanan değerler varsa bu değişkenler doğrudan struct içerisine 
+yazılır, yani `{ x: x }` şeklinde iki kez yazmaya gerek yoktur. 
+
+```js
+let point1 = Point {
+    x: 28,
+    y: 61,
+};
+
+let Point { x, y } = point1;
+```
+
+Yukarıdaki kod blokunda görüldüğü üzere `destructuring` yani parçalama yöntemiyle bir struct'ın ögelerini çıkartıp değişkenlere atayabiliriz. 
+
+## Enum
+
+Bir tipin birden fazla olasılıkta alabileceği değerleri bir arada tutmak için kullanılan yapılara `enum` denilir. Örneğin bir cismin alabileceği farklı renkleri
+bir enum içerisinde tutabiliriz:
+
+```js
+enum Color {
+    Blue: (),
+    Red: (),
+    White: (),
+    Green: (),
+}
+
+fn main() {
+    let blue = Color::Blue;
+    let white = Color::White;
+}
+```
+Yukarıdaki örnekte "Color" adında bir enum tanımladık, içerisinde dört farklı rengi barındırıyor. Daha sonra bu enum içerisindeki her bir değere `::` notasyonuyla
+erişerek bir değişkene atayabiliriz.
+
+Enum varyantları (farklı değerleri) bir struct içerisindeki değişkenlere de atanabilir:
+
+```js
+enum Color {
+    Blue: (),
+    Red: (),
+    White: (),
+    Green: (),
+}
+
+struct Car {
+    color: Color,
+    price: u64,
+}
+
+fn main() {
+    let my_car = Car {
+      color: Color::White,
+      price: 3500,
+    };
+}
+```
+Yukarıdaki kod blokunda Car adlı bir struct tanımlanmış ve sahip olduğu "color" ögesine tip olarak Color adlı enum atanmış. Daha sonra "my_car" adlı 
+değişkende bu struct örneği oluşturularak "color" verisine değer atamasında Color enum'ının bir varyantı atanmış. Benzer şekilde kullanımı struct içinde 
+enum yerine enum içinde enum kullanılarak da yapılabilir.
+
+## Metotlar ve İlişkisel Fonksiyonlar
+
+Metotlar (Method) tıpkı fonksiyonlara benzerler, `fn` anahtar sözcüğü ile oluşturulurlar ve parametre alıp geriye bir değer döndürebilirler. Fonksiyonlardan farkı
+bir struct ya da enum'a bağımlı bir şekilde oluşturulmalarıdır. Oluşturuldukları struct'a bağlı olduklarından bir metodun ilk parametresi her zaman `self`' tir ve 
+o struct'a referansı temsil eder, yani `self` ile o struct'a erişilebilir ve böylece struct içerisindeki değişkenler üzerinde çeşitli işlemler yapılabilir. 
+
+İlişkisel Fonksiyonlar da tıpkı metotlar gibidir, bir struct veya enum'a bağlı olarak oluşturulurlar ancak metotlardan farklı olarak ilk parametreleri `self` değildir,
+böylece struct içerisindeki değişkenlere erişimleri yoktur.
+
+Bir metot ya da İlişkisel fonksiyon oluşturmak için `impl` anahtar sözcüğü kullanılır.
+
+```js
+script;
+
+struct Foo {
+    bar: u64,
+    baz: bool,
+}
+
+impl Foo {
+    fn baz_true(self) -> bool {      // metot
+        self.baz
+    }
+
+    fn new(number: u64, boolean: bool) -> Foo {     // İlişkisel fonksiyon
+        Foo {
+            bar: number,
+            baz: boolean,
+        }
+    }
+}
+
+fn main() {
+    let foo = Foo::new(42, true);
+    assert(foo.baz_true());
+}
+```
+
+Yukarıdaki script kodlarında ilk önce "Foo" adlı bir struct tanımlanmış. Daha sonra `impl Foo` diyerek bir kod bloku açılarak Foo adlı struct'tan bir bir metot ve
+bir ilişkisel fonksiyon oluşturulmuş. `baz_true` parametre olarak `self` aldığından bu bir metottur, artık struct içerisindeki verilere `self.bar` ve
+`self.baz` ile erişebiliriz. Metotları çağırmak için `foo.baz_true()` şeklinde nokta notasyonu kullanılır.
+`new` parametre olarak `self` almadığından bu bir İlişkisel fonksiyondur, çoğunlukla `new` adı verilerek ilişkili olduğu struct'ın bir örneğini (instance)
+oluşturmak istediğimizde bu şekilde yaygın olarak kullanılır, ancak elbette "new" dışında başka bir ad da verilebilir.
+
+Metotlar ve İlişkisel fonksiyonlarda da `ref mut` kullanılabilir.
+
+```js
+struct Coordinate {
+    x: u64,
+    y: u64,
+}
+
+impl Coordinate {
+    fn move_to_right(ref mut self, distance: u64) {
+        self.x += distance;
+    }
+}
+
+fn main() {
+    let mut point = Coordinate { x: 2, y: 2 };
+    point.move_to_right(6);
+    assert(point.x == 8);
+    assert(point.y == 2);
+}
+```
+## Yorumlar
+
+Yorum satırları (comments) kod üzerinde küçük bilgi notları bırakmak için yazılan ve derleyicinin görmezden geldiği satırlardır. Sway'de yorum satırları tıpkı
+diğer programlama dillerinde olduğu `//` kullanılarak yapılır.
+
+```js
+fn main() {
+    let x = 12; // bu bir yorum satırı
+    /*
+    Çok satırlı yorum yazmak istersen
+     buradaki gibi yapabilirsin.
+    */
+    let baz = 8;
+}
+````
+
+Yukarıdaki örnekte görüldüğü gibi yorumları birden çok satıra yaymak istersek başlangıç olarak `/*` ve bitişte de `*/` kullanılabilir.
+
+## Kontrol Akışı
+
+### If
+
+Sway ile koşul yapılarını kurabilmek için diğer programlama dillerindeki gibi `if` ve `else if` yapıları kullanılabilir:
+
+```js
+fn main() {
+    let number = 8;
+
+    if number % 5 == 0 {
+        // işlemler
+    } else if number % 4 == 0 {
+        // başka işlemler
+    } else {
+        // daha başka işlemler
+    }
+}
+```
+
+Tıpkı Rust'ta olduğu gibi Sway'de de `if` yapıları bir eşitliğin sağ tarafına kullanılarak gelen sonuç eşitliğin sol tarafındaki `let` anahtar sözcüğü ile
+başlayan bir değişkene eşitlenebilir.
+
+```js
+let my_var = if my_bool < 12 { foo() } else { bar() };
+```
+
+Yukarıdaki kod satırında `if` yapısından değerlendirilerek gelen sonuç `my_var` adlı değişkene eşitlenmiş.
+
+### Match
+
+`match` yapılarında `if` ifadelerinden farklı olarak olası bütün durumlar tek tek ele alınır ve değerlendirilir, olası bütün durumların ele alınmadığı
+bir durumda derleyici hata verecektir.
+
+```js
+enum Weather {
+    Sunny: (),
+    Rainy: (),
+    Cloudy: (),
+    Snowy: (),
+}
+
+let currentWeather = Weather::Sunny;
+let avgTemp = match currentWeather {
+    Weather::Sunny => 80,
+    Weather::Rainy => 50,
+    Weather::Cloudy => 60,
+    Weather::Snowy => 20,
+};
+```
+Yukarıdaki kod blokunda hava durumunu temsil eden bir enum tanımlanmış ve halihazırdaki havanın durumuna göre ortalama sıcaklık verisi `match` ifadesi 
+ile değerlendirilmiş. Bu örnekte `match` ifadesi içerisinde hava durumunun bütün olası değerleri eşleştirilebilmiş ancak bazı durumlarda olası eşleşmelerin
+sayısı çok fazla ya da belirsiz olabilir. Böyle durumlarda bilinen ya da bilinmeyen olası diğer bütün durumların eşleşmesi `_` ile sembolize edilir.
+
+```js
+let x = 12;
+    match x {
+        5 => on_odd(x),
+        _ => on_even(x),
+    };
+```
+Yukarıdaki örnekte "x" değişkeni için bir match ifadesi oluşturulmuş. Eğer değeri 5 ise yapılacak eşleşme belirtilmiş ancak x'in diğer bütün olası değerleri için
+bu durumlar `_` (alt tire) ile sembolize edilip eşleşmesi yapılmış.
+
+### Döngüler (loop)
+
+Sway'de döngüler yalnızca `while` ile sınırlıdır. While döngüleri, verilen bir koşul doğru sürece içerisindeki kod blokunun çalışmaya devam etmesini sağlayan yapılardır.
+Bir while döngüsünün kaç defa tekrarlayarak çalıştığını gösteren değere "iterasyon sayısı" denir.
+
+```js
+while value < 10 {
+    value = value + 1;
+}
+```
+Yukarıda bir while döngüsü oluşturularak `value < 10` ifadesi doğru olduğu sürece döngüde kalması ve değerinin bir arttırılması sağlanıyor.
+
+Bir döngüyü sonuna kadar tamamlamadan erken sonlandırmak istendiğinde `break` ifadesi kullanılabilir. Aşağıdaki kod blokunda "counter" değeri "num" değerinden
+büyük olması durumunda döngüden çıkılması isteniyor, aksi durumlarda ise döngü çalışmaya devam ediyor.
+
+```js
+fn break_example() -> u64 {
+    let mut counter = 1;
+    let mut sum = 0;
+    let num = 10;
+    while true {
+        if counter > num {
+            break;
+        }
+        sum += counter;
+        counter += 1;
+    }
+    sum // 1 + 2 + .. + 10 = 55
+}
+```
+
+Bir döngü devam ederken belli bir kısmını atlayıp bir sonraki iterasyona geçmek istenilen durumlarda ise `continue` kullanılır. Aşağıdaki kod blokunda "counter" 
+değeri "num" değerinden küçük olduğu sürece döngünün devam etmesi isteniyor ve "counter" değeri her iterasyonda bir arttırılıyor. Ancak eğer `counter`'ın ikiye
+bölümünden kalan 0 ise yani bir çift sayı ise herhangi bir işlem yapılmadan devam edilmesi sağlanarak sadece tek sayılar değerlendirilip toplamı bulunuyor.
+
+```js
+fn continue_example() -> u64 {
+    let mut counter = 0;
+    let mut sum = 0;
+    let num = 10;
+    while counter < num {
+        counter += 1;
+        if counter % 2 == 0 {
+            continue;
+        }
+        sum += counter;
+    }
+    sum // 1 + 3 + .. + 9 = 25
+}
+```
+
+Sway iç içe `while` döngülerini de destekler. Böyle yapılarda en dıştaki döngüden çıkılmadığı sürece içerideki döngüler de her iterasyonda çalıştırılmaya devam edecektir.
+
+```js
+while durum_1 == true {
+    // işlemler
+    while durum_2 == true {
+        // başka işlemler
+    }
+}
+```

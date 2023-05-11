@@ -1,0 +1,453 @@
+---
+sidebar_position: 4
+---
+# Değer Tipleri, Fonksiyonlar ve Kontrol Akışı
+
+## Değer Tipleri (Value Types)
+
+### Booleanlar (Booleans)
+
+Booleanlar bir değişkenin `true` ya da `false`, yani doğru ya da yanlış değerlerinden birine sahip olduğu değer tipidir ve `bool` ifadesi ile kullanılır.
+
+```solidity
+bool public isPaid = true;
+```
+
+Bu basit örnek kullanımda `isPaid` değişkenine `true` değerini atadık.
+
+### Tam sayılar (Integers)
+
+Solidity, 2 farklı sayı türüne sahip: `int` ve `uint`. Bunlara *işaretli (signed)* ya da *işaretsiz (unsigned)* tam sayılar diyoruz ve `uint8`, `uint16`, ... , `uint256`; ya da `int8`, `int16`, ... , `int256` gibi değer tiplerini sıklıkla kullanıyoruz. Peki bunlar ne anlama geliyor ve birbirlerinden nasıl ayrışıyorlar?
+
+> Solidity'de tam sayılar belirli aralıklara sınırlandırılmıştır.
+
+**int8:** $[-2^8, 2^8 - 1]$ kapalı aralığındaki tüm tam sayıları kapsar. <br />
+**uint8:** $[0, 2^8 - 1]$ kapalı aralığındaki tüm tam sayıları kapsar. <br />
+**int256:** $[-2^{256}, 2^{256} - 1]$ kapalı aralığındaki tüm tam sayıları kapsar. <br />
+**uint256:** $[0, 2^{256} - 1]$ kapalı aralığındaki tüm tam sayıları kapsar.
+
+Diğerlerini de tamamen aynı mantık örgüsünü kullanarak düşünebilirsiniz.
+
+```solidity
+uint8 public number1 = 1;
+uint256 public number2 = 128;
+
+int8 public number3 = -1;
+int256 public number4 = -128;
+```
+
+### Adresler (Addresses)
+
+Address tipi, Solidity söz diziminde 2 farklı türde bulunur: `address` ve `address payable`.
+- `address`: 20 byte uzunluğunda (bir Ethereum adresinin uzunluğu) bir değer tutar.
+- `address payable`: `address` ile aynı özelliklere sahiptir fakat ilaveten `transfer` ve `send` gibi ögeleri de içinde bulundurur.
+
+Peki neden böyle bir ayrım var? Birçok adres (kişi ya da kontrat) Ether kabul etse de bazı kontratlar Ether kabul etmemek üzere tasarlanmış olabilir. Böyle bir durumda tanımlanmış adresin *payable* olmaması gerekir.
+
+**Adreslerin Ögeleri:**
+- `balance`
+- `transfer`
+
+Bu ögeleri kullanarak; kodladığımız akıllı kontratta tanımladığımız bir adresin sahip olduğu Ether miktarını sorgulayabilir, ya da kontratın bu adrese Ether göndermesini sağlayabiliriz.
+
+```solidity
+address payable x = 0x71c7653ec7ab88b098defb731c7401e5f6d8976a;
+address myAddress = address(this);
+
+if (myAddress.balance >= 10) {
+  x.transfer(10);
+}
+```
+
+## Referans Tipleri (Reference Types)
+
+> *Referans tipi*, doğrudan oluşturulduğu yerde saklanmayan, ancak başka bir yerde saklanan bir değere bir tür işaretçi görevi gören bir kod nesnesidir.
+
+Bu nedenle, bir referans tipi kullanmak istediğimizde bu tipin tutulacağı veri konumu da açık bir şekilde belirtmemiz gerekiyor. Peki veri konumundan kastımız ne? Solidity'de 3 adet veri konumu türü var: `memory`, `storage` ve `calldata`.
+
+`memory`: Bu konumdaki verilerin ömrü dışarıdan bir fonksiyon çağrılması ile sınırlıdır.
+`storage`: Durum değişkenlerinin tutulduğu konumdur ve bu konumdaki verilerin ömrü kontratın ömrü ile sınırlıdır.
+`calldata`: Bu özel veri konumu, fonksiyon argümanlarını içerir.
+
+### Diziler (Arrays)
+
+Birden fazla aynı tipte veriyi eleman olarak tutan referans tipine *dizi* diyoruz.
+
+Sabit $k$ boyutundaki, $T$ türünde elemanlar barındıran bir dizi $T[k]$ şeklinde gösteriyoruz. Dinamik boyuttaki diziler ise $T[]$ şeklinde gösteriliyor.
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Arrays {
+  function f() public {
+    uint256[] memory myArray = [1, 2, 3];
+  }
+}
+```
+
+**Dizilerin Ögeleri:**
+
+`length`: Bir dizinin boyutunu döndürür. Örnek: `myArray.length`
+`push()`: Bir dizinin en sonuna yeni bir eleman eklemenizi sağlar. Örnek: `myArray.push() = 4`
+`pop()`: Bir dizinin son elementini diziden çıkarmanızı sağlar. Örnek: `myArray.pop()`
+
+### Eşlemeler (Mappings)
+
+Tıpkı diziler gibi eşlemeler de bir referans tipidir ve şu şekilde tanımlanır:
+
+```solidity
+mapping(_KeyType => _ValueType)
+```
+
+Peki eşlemeleri neden ve nasıl kullanırız? Mesela elimizde birden fazla kullanıcının adresi ve bu adreslerde tuttukları Ether (ETH) miktarı verisi var. Biz bu veriyi şu şekilde kolaylıkla depolayabilir ve güncelleyebiliriz:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Balance {
+  mapping(address => uint256) public balances;
+
+  function updateBalance(address user, uint256 newBalance) public {
+    balances[user] = newBalance;
+  }
+}
+```
+
+## Değişkenler (Variables)
+
+Solidity'de 3 farklı değişken türü var. Bunlar; *yerel* değişkenler, *durum* değişkenleri ve *evrensel* değişkenler.
+
+**Yerel Değişkenler (Local Variables)**
+- Bir fonksiyonun içinde tanımlanırlar.
+- Blokzincir üzerinde depolanmazlar.
+
+**Durum Değişkenleri (State Variables)**
+- Fonksiyonların dışında tanımlanırlar.
+- Blokzincir üzerinde depolanırlar.
+
+**Evrensel Değişkenler (Global Variables)**
+- Blokzincir hakkında bilgi sağlarlar.
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Variables {
+  string public name = "Web";
+  uint256 public number = 3;
+
+  function f() public {
+    uint256 number2 = 123;
+
+    uint256 time = block.timestamp;
+    address user = msg.sender;
+  }
+}
+```
+
+Bu örnekte `name` ve `number`, durum değişkenlerimiz. Dolayısıyla bunlar zincir üzerinde depolanıyorlar.
+
+`number2`, `f()` fonksiyonunun içinde tanımlandığı için yerel değişkenimiz.
+
+Son olarak `time` ve `user` ise bu kontrattaki evrensel değişkenlerimiz. `block.timestamp` (o anki blok timestamp'ini döndürür) ve `msg.sender` (fonksiyonu çağıran kullanıcının adresini döndürür) ise Solidity'nin özel değişkenlerinden bazıları.
+
+## Sabitler (Constants)
+
+*Sabitler*, en basit tanımlamayla değiştirilemeyen değişkenlerdir. Gelin, yine bir örnekte inceleyelim:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Constants {
+  address public constant MY_ADDRESS = 0x337788889999AaAAbBbbCcccddDdeeeEfFFfdDdD;
+  uint256 public constant MY_NUMBER = 1234;
+}
+```
+
+## Structs
+
+*Struct* dediğimiz yapı, kendi veri tiplerimizi oluşturmaya yarar. Peki buna neden ihtiyaç duyarız?
+
+Birden fazla farklı veri tipini sürekli kullanmamız gereken durumlarda işimizi fazlasıyla kolaylaştırırlar çünkü!
+
+*Struct*lar fonksiyonların dışında tanımlanıp başka kontratlarda da import edilerek kullanılabilirler. Şimdi gelin, bir struct nasıl tanımlanır ve sonra nasıl kullanılır bir örnek üzerinde görelim:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Structs {
+  struct Task {
+    string text;
+    bool isCompleted;
+  }
+}
+```
+Buraya kadar `Structs` adlı bir kontrat oluşturduk ve `Task` adında bir struct yarattık. Artık kontratımızın içinde, hatta import ederek başka kontratlarda da, kullanabileceğimiz yeni bir veri tipimiz var.
+
+```solidity
+Task[] public tasks;
+```
+Şimdi de yarattığımız `Task` türünde elemanlar içeren `tasks` adında bir dizi tanımladık. Bu dizinin içine yapmamız gereken görevleri ekleyip, sonra bu görevleri tamamladığımızda da bu görevleri direkt kaldırmak yerine tamamlandı olarak işaretleyebileceğiz.
+
+```solidity
+function createNewTask(string _newTask) public {
+  tasks.push(Task(_newTask, false));
+}
+```
+Bu adımda da `createNewTask` adında bir fonksiyon tanımladık ve bu fonksiyon `_newTask` adlı bir string'i alıp bir önceki adımda oluşturduğumuz dizinin içine ekliyor. Burada eklediğimiz görevin tamamlanma değerini `false` yani "tamamlanmamış" olarak tanımladığımıza dikkat edelim!
+
+```solidity
+function getTaskStatus(uint _index) public view returns (string memory text, bool isCompleted) {
+  Task storage task = tasks[_index];
+  return (task.text, task.isCompleted);
+}
+```
+Artık istediğimiz bir görevin tamamlanıp tamamlanmadığını öğrenebileceğimiz bir fonksiyonumuz da var.
+
+Son olarak, tamamladığımız görevlerimizin tamamlanma durumunu değiştirmemize izin verecek bir fonksiyon daha yazalım:
+
+```solidity
+function markCompleted(uint _index, bool _isCompleted) public {
+  Task storage task = tasks[_index];
+  task.isCompleted = _isCompleted;
+}
+```
+Şu anda elimizde, yeni görevler yaratabildiğimiz, bu görevlerin o anki durumlarını sorgulayabildiğimiz, bir görevi tamamladığımızda ya da tamamlanmış bir görevi tekrar "tamamlanmamış" işaretlemek istediğimiz de görevlerin durumunu değiştirebildiğimiz bir kontrat var.
+
+Kontratımızın tamamı şu şekilde:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Structs {
+  struct Task {
+    string text;
+    bool isCompleted;
+  }
+
+  Task[] public tasks;
+
+  function createNewTask(string _newTask) public {
+    tasks.push(Task(_newTask, false));
+  }
+
+  function getTaskStatus(uint _index) public view returns (string memory text, bool isCompleted) {
+    Task storage task = tasks[_index];
+    return (task.text, task.isCompleted);
+  }
+
+  function markCompleted(uint _index, bool _isCompleted) public {
+    Task storage task = tasks[_index];
+    task.isCompleted = _isCompleted;
+  }
+}
+
+```
+
+## If / Else
+
+Solidity; `if`, `else if` ve `else` gibi koşullu önermeleri destekliyor. Koşullu önerme yazımı ise fazlasıyla kolay, birçok programlama diline benziyor.
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract IfElse {
+  function f(uint256 x) public pure returns (uint256) {
+    if (x < 10) {
+      return 0;
+    } else if (x < 20) {
+      return 1;
+    } else {
+      return 2;
+    }
+  }
+}
+```
+
+Bazı programlama dillerinde de karşılaşabileceğiniz gibi, Solidity'de de koşullu önermeleri kısa yoldan yazmak mümkün.
+
+```solidity
+function f(uint256 _x) public pure returns (uint256) {
+  if (_x < 10) {
+    return 1;
+  }
+
+  return 2;
+}
+```
+
+Mesela yukarıdaki koşullu önerme içeren fonksiyonu şu şekilde yazmak da mümkün:
+
+```solidity
+function f(uint256 _x) public pure returns (uint256) {
+  return _x < 10 ? 1 : 2;
+}
+```
+
+## For ve While Döngüleri (For and While Loops)
+
+Solidity `for` ve `while` döngülerini de destekliyor, kullanımı ise yine standart:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Loops {
+  function f() public {
+    for (uint256 i = 0; i < 10; i++) {
+      if (i < 3) {
+        continue;
+      }
+
+      if (i == 5) {
+        break;
+      }
+    }
+
+    uint256 j;
+    while (j < 10) {
+      j++;
+    }
+  }
+}
+```
+
+## Constructor
+
+Constructor'lar, bir kontrat yaratıldığında çalıştırılan bir fonksiyondur.
+
+```solidity
+constructor() {
+  owner = msg.sender;
+}
+```
+
+Mesela bu örnekte yazdığımız bu constructor; kontratın sahibi olara bu fonksiyonu çağıran kullanıcıyı, yani kontratı deploy eden kişiyi atıyor. Peki bu neden önemli ve bunu nasıl kullanabiliriz?
+
+Çünkü kontratımızda tanımladığımız bazı fonksiyonları, mesela admin fonksiyonları, sadece kontratı kontrol eden kişinin çağırmasını tercih ediyoruz.
+
+## Modifier'lar
+
+Modifier'lar, akıllı kontratlarımızda yazdığımız fonksiyonları kısıtlamak amaçlı kullandığımız kod bloklarıdır.
+
+Gelin, bir modifier nasıl tanımlar ve kullanırız; en çok kullanılan örneklerden biri olan `onlyOwner` modifier'ı üzerinden görelim:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Modifiers {
+  address public owner;
+  uint256 public x = 10;
+  bool public isLocked;
+
+  constructor() {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner, "Not owner!);
+    _;
+  }
+
+  function changeOwner(address _newOwner) public onlyOwner {
+    owner = _newOwner;
+}
+```
+
+Bu modifier sayesinde `changeOwner` fonksiyonunu sadece adminin çağırabilmesini sağladık.
+
+Tam bu noktada akıllara şöyle bir soru gelebilir:
+
+> `onlyOwner` modifier'ını tanımlayıp, bir de bunu fonksiyonu yazarken kullanmak yerine neden `require` satırını fonksiyonda kullanmıyoruz?
+
+Çünkü bu nitelikte birden fazla sayıda fonksiyonumuz olabilir ve bu durumda aynı `require` satırını yazmak yerine modifier kullanmak çok daha kolay ve verimli olacaktır.
+
+### Event'ler
+
+Bir Solidity kontratında çok büyük olasılıkla rastlayacağınız bir diğer kavram da `event` kavramı. Peki `event`leri akıllı kontratlarımızda neden kullanırız?
+
+Birçok Solidity kontratı en temel haliyle değişkenler ve fonksiyonlardan oluşur. Kullanıcılar bu fonksiyonları çağırarak yapmak istedikleri işlemleri yaparlar. `Event`ler ise bu işlemlerin bir tür *günlüğünü tutmamıza* (*logging*) olanak verir. Bir blok tarayıcısına (mesela [Etherscan](htttps://etherscan.io)) gidip herhangi bir işlemin (transaction) detaylarına bir göz atmak istediğinizde o işlem sırasında hangi event ya da event'ler `emit` edilmiş görebilirsiniz.
+
+> Event'lerin bir blok tarayıcısına gidip bir işlemi incelemek dışında işlevleri de var tabii ki. Mesela, blokzincir verisi indekslemek için kullanılan *Subgraph* teknolojisi de işlemlerde `emit` edilmiş `event`leri takip eder.
+
+Peki nasıl kullanırız?
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Events {
+  event Transfer(address indexed to, uint256 amount);
+
+  mapping(address => uint256) public balances;
+
+  function transfer(address _to, uint256 _amount) {
+    balances[_to] += _amount;
+
+    emit Transfer(_to, _amount);
+  }
+}
+```
+
+## Token Standartları
+
+Temel Solidity söz dizimi (syntax) üzerinde bir süre durduktan sonra, şimdi ki durağımız token standartları. şimdilik sadece *ERC20* ve *ERC721* standartlarına değineceğiz.
+
+### ERC20 Kontratı
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract ERC20 {
+  uint256 public totalSupply;
+  mapping(address => uint256) public balanceOf;
+  mapping(address  =>  mapping(address  =>  uint)) public allowance;
+  string  public name =  "Ethereum Turkey";
+  string  public symbol =  "ETHTR";
+  uint8  public decimals =  18;
+
+  function transfer(address recipient, uint amount) {
+    balanceOf[msg.sender] -= amount;
+    balanceOf[recipient] += amount;
+    emit Transfer(msg.sender, recipient, amount);
+  }
+
+  function approve(address spender, uint amount) {
+    allowance[msg.sender][spender] = amount;
+    emit Approval(msg.sender, spender, amount);
+  }
+
+  function transferFrom(address sender, address recipient, uint256 amount) {
+    allowance[sender][msg.sender] -= amount;
+    balanceOf[sender] -= amount;
+    balanceOf[recipient] += amount;
+    emit Transfer(sender, recipient, amount);
+  }
+
+  function mint(uint256 amount) external {
+    balanceof[msg.sender] += amount;
+    totalSupply += amount;
+    emit Transfer(address(0), msg.sender, amount);
+  }
+
+  function burn(uint256 amount) external {
+    balanceof[msg.sender] -= amount;
+    totalSupply -= amount;
+    emit Transfer(address(0), msg.sender, amount);
+  }
+}
+```
+
+Bu gördüğünüz belki de en sade haliyle bir *fungible* token kontratı. Neden fungible? Çünkü birinin diğerinden hiçbir ayırt edici farkı yok.
+
+Bir standarda sahip olduğumuz için epey şanslıyız aslında. Çünkü bu sayede yeni bir token çıkarmak isteyen bir proje ya da kişi kolaylıkla bunu yapabiliyor. Daha da önemlisi, kullandığımız merkeziyetsiz uygulamalar, her token için kontratlarını hazırlamak zorunda kalmıyorlar.
+
+Gündelik hayatımızda kullandığımız kripto paraların neredeyse hepsi bu standartta yazılmıştır.

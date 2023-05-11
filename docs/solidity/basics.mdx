@@ -1,0 +1,20 @@
+---
+sidebar_position: 3
+---
+# Solidity'nin Temelleri
+
+## Solidity Kontratının Anatomisi (Anatomy of a Solidity Contract)
+
+Solidity'nin temel söz dizimi (bkz. syntax) üzerine konuşmadan önce çok temel birkaç şeye göz atabiliriz.
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract HelloWorld {
+  string public greeting = "Hello World!";
+}
+```
+Solidity kodları, lisans belirtildikten sonra, kodun yazıldığı Solidity sürümü belirtilerek başlar. Bunu `pragma solidity` kullanarak kolaylıkla yapabiliyoruz. `^0.8.0` ifadesinin başında kullandığımız `^` işaretiyse, yazdığımız kodun `0.8.0` ve üzeri tüm sürümleri desteklediğini gösteriyor.
+
+Solidity sürümünü belirtmemizin hemen ardından yazacağımız kontratı başlatıyoruz. Bunu yapmak için `contract` ifadesinden sonra akıllı kontratımız için belirlediğimiz adı yazmamız ve bir süslü parantez açmamız yeterli. Kontratımızı bu süslü parantezlerin arasına yazacağız. Mesela yukarıdaki örnekte, `greeting` adında bir değişken yaratıp buna `"Hello World!"` değerini atadık. Veri tiplerine ve değişkenlere önümüzdeki bölümlerde detaylı olarak değineceğiz.

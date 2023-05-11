@@ -1,0 +1,100 @@
+---
+sidebar_position: 3
+---
+# Rust ile Çalışmak
+
+Rust ile olan harika yolculuğumuza başlamanın zamanı geldi. Bu bölümde şu alt başlıkları ele alacağız:
+
+- Rust kurulumu (Windows, MacOS, Linux ve WSL)
+- Cargo ile çalışmak
+- Bir Rust projesinin dosya yapısı
+
+## Kurulum
+
+Rust'ı bilgisayarımıza kurmak için "rustup" adlı komut satırı aracını kullanırız. Böylece hem en güncel stabil Rust sürümü
+hem de Rust ile ilgili çeşitli geliştirici araçları bilgisayarımıza otomatik olarak yüklenmiş olur.
+
+Windows'ta kurulum yapmak için [buradaki](https://www.rust-lang.org/tools/install) sayfadan bilgisayarınızın mimarisine (32 bit ya da 64 bit)
+uygun olan linkten indirme işlemini başlatarak kurulumu gerçekleştirebilirsiniz. Windows için C++ geliştirici
+araçları da gerekebildiğinden, kurulum aşamalarında Visual Studio ile bu araçların kurulumu da yapılır.
+
+MacOS, Linux ve WSL (Windows subsystem for Linux) için terminalinizde aşağıdaki komutu çalıştırın:
+
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+Kurulumu gözden geçirmek ve sürüm bilgisini öğrenmek için şu komutu çalıştırın:
+
+```
+rustc --version
+```
+
+Rust sürümünü güncellemek için şu komutu çalıştırın:
+
+```
+rustup update
+```
+
+:::info BİLGİ
+Daha fazla bilgi için resmi sitedeki [kurulum](https://www.rust-lang.org/tools/install) sayfasına göz atabilirsiniz.
+:::
+
+## Cargo ile çalışmak
+
+Cargo, Rust'ın paket yöneticisi ve temel geliştirici aracıdır. Rust projelerinizi geliştirirken size sağladığı araçlar
+ile birçok işi kolaylaştıran özellikler sağlar ve Rust geliştiricileri tarafından çok yaygın bir şekilde kullanılır. Rust
+kurulumuyla birlikte otomatik olarak gelen Cargo'nun versiyon bilgisi için şu komutu çalıştırın:
+
+```
+cargo --version
+```
+
+### Cargo ile bir Rust projesi başlatmak
+
+Eğer Rust'ı yeni öğrenen biriyseniz Cargo ile kolayca bir Rust projesi başlatabilir ve sunduğu dosya şablonu ve
+geliştirici araçları ile birçok görevi ona bırakıp sadece işinizi yapmaya odaklanabilirsiniz.
+Cargo ile bir proje başlatmak için terminalinizde şu komutu çalıştırın:
+
+```
+cargo new hello_world
+cd hello_world
+```
+
+İlk komutu çalıştırdığınızda "hello_world" adında yeni bir Rust projesi başlatılır, eğer başka bir ad vermek istiyorsanız
+`cargo new` yazdıktan sonra projenizin adını yazın.
+
+Terminalinizde proje dizinindeyken ilk Rust projenizi derlemek (compile) için şu komutu çalıştırın:
+
+```
+cargo build
+```
+Böylece Cargo sizin için Rust kodlarınızı derleyecek (bilgisayarın anlayabildiği makine kodlarına dönüştürecek) ve çalıştırılmaya
+hazır hale getirecektir. Derlenen kodları çalıştırmak için şu komutu çalıştırın:
+
+```
+cargo run
+```
+Bu komutu çalıştırdıktan sonra terminalde varsayılan olarak "Hello, world!" yazdırılır.
+Tebrikler, ilk Rust projenizi çalıştırdınız!
+Şimdi Cargo ile oluşturduğunuz bir Rust projesinin dosya yapısını inceleyelim.
+
+## Bir Rust projesinin dosya yapısı
+
+Cargo ile oluşturduğunuz bir proje ile sizin için çeşitli dosyalardan oluşan bir şablon oluşturulur. Şimdi bu dosyaların neler olduğunu
+ve ne işe yaradığını öğrenelim.
+"hello_world" adıyla oluşturduğumuz proje dosyasını herhangi bir IDE ( [VSCode](https://code.visualstudio.com/) gibi) ile açtığınızda sol tarafta şöyle bir dosya ağacı görürüz:
+
+- "hello_world"
+- "src"
+- "main.rs"
+- ".gitignore"
+- "Cargo.toml"
+
+Bu dosya ağacındaki ögeleri tek tek inceleyelim.
+
+- "src" adlı klasör uygulamanın kaynak kodlarının bulunduğu dosyanın adıdır. İçerisinde bulunan "main.rs" ise
+default (varsayılan) çalıştırılabilir (executable) kodların olduğu dosyadır.
+- "Cargo.toml" proje hakkında bir takım bilgilerin kaydedildiği ve ayarlandığı bir konfigürasyon dosyasıdır.
+- ".gitignore" uzak Git reponuza (Github gibi) dahil etmek istemediğiniz dosyaların adlarının kaydedildiği dosyadır.
+
+Başlangıç için yeterli bir dosya yapısı olsa da Rust projeniz büyüdükçe daha farklı dosya türleri ve yapıları ile çalışmanız olasıdır.

@@ -1,0 +1,462 @@
+---
+sidebar_position: 6
+---
+# Jenerik Tipler, Trait ve Koleksiyonlar
+
+## Jenerik (Generic) Tipler
+
+Sway ile çalışırken bütün verilerin tipinin belli olması gerekir. Bir fonksiyon tanımlarken ya da enum, struct gibi veri türleri ile çalışırken, 
+belli bir tipe bağımlı olarak değil de birden fazla farklı veri tipiyle
+çalışabilmesi şeklinde bir yapı kurmak isteyebiliriz. Böyle bir durumda `jenerik` olarak adlandırılan tip yapısı ile bunu sağlamak mümkündür.
+
+Bir fonksiyon düşünün, aldığı parametrelerin tip atamasını mutlaka yapmak gereklidir, ancak ya aynı fonksiyon tek bir tiple değil de farklı tipte
+parametrelerle de çalışabiliyorsa? Örneğin aşağıdaki basit bir fonksiyonun sadece `u64` ile değil de örneğin `b256` tipi ile de çalışabildiği
+işlemler yaptığını varsayın:
+
+```js
+fn my_function(x: u64) -> u64 {
+  // birtakım işlemler
+}
+
+fn my_function(x: b256) -> b256 {
+    // birtakım işlemler
+}
+```
+O halde aynı fonksiyonu iki kere tanımlamak yerine bir kez tanımlayıp jenerik tip ataması yaparsak, derleyici parametre ile gelen verinin tipini analiz edip
+tanımlayarak tip ataması yapar ve işlemlerini sürdürür:
+
+```js
+fn my_function<T>(x: T) -> T {
+    // birtakım işlemler
+}
+```
+Yukarıdaki kodlarda jenerik bir fonksiyon tanımladık. `T` harfi o verinin tipini temsil eder ve herhangi bir harf ya da sözcük olabilir ancak çoğunlukla T harfi
+kullanılır. Fonksiyon adından sonra `<T>` yazılır, parametre ve döndürülen değerin tip atamasında ise sadece `T` yazılır.
+
+Fonksiyonlar dışında struct ve enum'larda da jenerik tipler yaygın olarak kullanılır. Örneğin daha önce ele aldığımız Sway kütüphanesinden Option ve Result
+enum'ları jenerik tipte tanımlıdır.
+
+```js
+enum Option<T> {
+    Some(T),
+    None,
+}
+
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+```
+
+Aşağıdaki kod blokunda `Option<T>` için iki farklı tipin tanımlandığı bir örnek verelim:
+
+```js
+let x: Option<u64> = Some(8);
+let y: Option<bool> = Some(true);
+```
+
+Aşağıdaki kod blokunda ise jenerik bir struct tanımlanmış ve aynı struct kullanılarak iki farklı tipte değerlerle örneklenmiş:
+
+```js
+struct Data<T> {
+    x: T,
+    y: T,
+}
+
+let integer_data = Data { x: 4, y: 6 };
+let bool_data = Data { x: true, y: false };
+```
+
+## Trait
+
+Trait'ler herhangi bir veri tipine işlevsellik katmak için kullanılırlar. Br kere tanımlandıktan sonra aynı trait birden farklı tip için tanımlanabilir, yani tipler
+üzerinde ortak fonksiyonellik sağlarlar. Böylece trait ile bir kere tanımlanan bir işlevsellik farklı tipler tarafından ortaklaşa kullanılabilir hale gelir.
+
+Bir trait tanımlamak için ilk önce `trait` anahtar sözcüğü yazıldıktan sonra trait adı yazılır ve süslü parantez `{}` ile bir kod bloku açılarak içerisine bir veya
+birden fazla olmak üzere trait metotları tanımlanır.
+
+```js
+pub trait Card {
+    fn value(self) -> u8;   // metodun gövdesi tanımlı değil
+}
+
+struct MyCard {
+    value: u8
+}
+
+impl Card for MyCard {
+    fn value(self) -> u8 {   // metodun gövdesi burada tanımlanmış
+        self.value
+    }
+}
+```
+
+Yukarıda "Card" adlı bir trait tanımlanmış ve içerisinde `value()`adlında bir metot tanımlı. "MyCard" adlı bir struct tanımlanmış ve `impl Card for MyCard` ifadesi
+ile Card trait'i MyCard'a implement edilmiş yani uygulanmış, dolayısıyla trait metodu olan `value()` artık kullanılabilir. Metodun gövdesi tanımlanmadığı için 
+implement edildiği esnada tanımlanmış. Eğer gövdesi tanımlanmayan trait metotları varsa bu metot gövdeleri implement edilirken ne yapılmak istendiğine bağlı olarak
+oluşturulabilir.
+
+```js
+trait Compare {
+    fn equals(self, b: Self) -> bool;
+} {
+    fn not_equals(self, b: Self) -> bool {
+        !self.equals(b)
+    }
+}
+```
+
+Yukarıda "Compare" adlı bir trait tanımlanmış, daha sonra açılan iki kod bloku var, ilk bloka "arayüz bloku" ikinci bloka ise "metot bloku" denilir. Arayüz 
+blokunda tanımlanan metotlar bir tip için uygulanabilirse metot blokundaki metotlara da erişim olur ve o tüp için uygulanabilir. Compare trait'inde denilmek istenen
+şudur: eğer iki değerin eşit olabileceği bir durum söz konusu ise o halde eşit olmayacağı durumları da `not_equals` metodu ile hesaplayabilirsin. Bunu bir örnek ile
+açıklayalım:
+
+```js
+impl Compare for u64 {
+    fn equals(self, b: Self) -> bool {
+        self == b
+    }
+}
+```
+Yukarıda "Compare" adlı trait'in `u64` tipine nasıl implement edildiğini (uygulandığını) görebiliyoruz. Bir trait'i bir tipe implement etme şekli tıpkı Rust'ta 
+yapıldığı gibidir, `impl` anahtar sözcüğünün ardından trait adı yazılır ve hangi tip için implement edilecekse `for` dan sonra o tipin adı yazılır ve kod bloku 
+açılarak trait metotları uygulanır. `u64` tipindeki sayılar için `equals` metodu ile eşitlik hesabı yapılabileceği için Compare adlı trait'in `not_equals` metoduna da
+erişebilir ve uygulayabilir.
+
+## Supertrait
+
+Birden fazla trait ile çalışırken, bir trait başka bir trait'in işlevselliğine ihtiyaç duyabilir. Örneğin Sway çekirdek (core) kütüphanesinden `Ord` adlı trait
+aynı zamanda `Eq` adlı trait'e ihtiyaç duyar, böyle durumlarda `Supertrait` kavramı devreye girer.
+
+```js
+trait Eq {
+    fn equals(self, b: Self) -> bool;
+}
+
+trait Ord: Eq {
+    fn gte(self, b: Self) -> bool;
+}
+
+impl Ord for u64 {
+    fn gte(self, b: Self) -> bool {
+        self.equals(b) || self.gt(b)
+    }
+}
+```
+
+Yukarıdaki kodlarda `Ord` trait'inin ihtiyaç duyduğu `Eq` trait'ini `trait Ord: Eq` ifadesi ile devreye aldık, yani supertrait olarak tanımladık.
+`:` işaretinden sonra hangi trait'ler supertrait olarak devreye alınmak isteniyorsa aralarına `+` işareti koyarak art arda yazılır. Son olarak `Ord` trait'ini 
+`u64` için implement ettiğimizde `Eq` trait'ine de erişimimiz olduğundan artık onun metotlarını kullanılabiliriz, yani `equals` metoduna `Ord` ile erişebiliriz.
+
+ABI tanımlamalarında da `supertrait` ler kullanılabilir:
+
+```js
+contract;
+
+trait ABIsupertrait {
+    fn foo();
+}
+
+abi MyAbi : ABIsupertrait {
+    fn bar();
+} {
+    fn baz() {
+        Self::foo()
+    }
+}
+
+impl ABIsupertrait for Contract {
+    fn foo() {}
+}
+
+impl MyAbi for Contract {
+    fn bar() {
+        Self::foo()
+    }
+}
+```
+
+Yukarıdaki kodlarda `ABIsupertrait` adlı bir trait oluşturulmuş ve `MyAbi` adıyla tanımlanan abi için supertrait olarak atanmış, dolayısıyla `MyAbi` nin `foo()`
+adlı metoda erişimi var. Kontrat için ABIsupertrait'i implement ettiğimizde kontratın da `foo() ` metoduna erişimi olur, ikinci bir yol olarak `MyAbi` yi kontrata
+implement edersek yine `foo()` ya erişebiliriz çünkü `ABIsupertrait` aynı zamanda `MyAbi` ye de supertrait olarak atanmış. 
+
+
+Jenerik tipler ile çalışırken bir trait implementasyonu yapılması gereken durumlar söz konusu olabilir, yani bir trait'i bir jenerik tip için uygulanabilir kılmak
+gerekiyorsa `where` anahtar sözcüğü ile bunun tanımlaması aşağıdaki gibi yapılır:
+
+```js
+fn get_hashmap_key<T>(Key : T) -> b256
+    where T: Hash
+{
+    // işlemler
+}
+```
+Yukarıda bir jenerik fonksiyon tanımlanmış ve `where T: Hash` ifadesi ile o jenerik tip için `Hash` adlı trait uygulanması zorunlu kılınmış, böylece Hash trait'i
+ile gelen bütün metotlar artık bu jenerik fonksiyonda `Key` için uygulanabilir.
+
+## Koleksiyonlar
+
+Sway dilinde tek değer alabilen birden çok veri tipi vardır (örneğin u64 gibi), öte yandan birden fazla değeri kendisinde tutabilen veri tipleri de mevcuttur. Array
+yani diziler ve tuple gibi birden fazla veriyi bir arada tutabilen tiplerin bir özelliği de boyutlarının sabit kalıp değişmemesidir, yani bir kere tanımlandıktan sonra
+veri ekleme ya da çıkarma yapılamaz. Dolayısıyla bu tipler belleğin `stack` yani Türkçe'ye yığın diye çevirebileceğimiz bölgesinde saklanırlar, çünkü `stack` de
+tutulan verilerin boyutu derleme zamanında bilinen verilerdir, değiştirilemezler.
+
+Öte yandan, belleğin `heap` adı verilen ve Türkçe'ye `öbek` olarak çevirebileceğimiz bölgesinde saklanan veriler boyutları sabit olmayan ve küçülüp büyüyebilen
+veri tipleridir. Sway özelinde bu veri tiplerine genel olarak `koleksiyon` tipleri denir ve üç tanedir:
+
+- Vektörler
+- Storage (Depo) Vektörü
+_ Storage Map
+
+### Vektörler
+
+Vektörler `Vec<T>` şeklinde jenerik tip olarak tanımlanan ve birden fazla ama aynı tipte verileri bir arada tutamaya yarayan boyutu değiştirilebilir bir koleksiyon
+tipidir. İçerisine aldığı veriye göre jenerik tipi değişir, örneğin `u64` tipinde verileri tuttuğunda tipi `Vec<u64>` olur, mantıksal (boolean) bir veri tuttuğunda
+tipi `Vec<bool>` olur. Sway standart kütüphanesinde tanımlı olduğundan manuel çağrılmaya gerek duyulmadan doğrudan kullanılabilir.
+
+Boyutu değiştirilebilir olduğundan daha sonra doldurulmak üzere boş bir vektör tanımlamak mümkündür:
+
+```js
+let v: Vec<u64> = Vec::new();
+```
+
+Boş bir vektör olduğundan yukarıdaki gibi tip ataması yapılarak vektörün hangi tipte veriyi beklediği belirtilir. boş bir vektöre veri göndermek için `push()` 
+metodu kullanılır ve aynı zamanda `mut` ile değiştirilebilir kılınmalıdır:
+
+```js
+let mut v = Vec::new();
+
+v.push(2);
+v.push(8);
+v.push(9);
+```
+
+Yukarıdaki kodlarda dikkat edilirse ilk başta yaptığımız gibi boş vektöre tip ataması yapmadık, bu durumda derleyici içerisine `push()` metodu ile gönderilen
+veriden çıkarım yaparak varsayılan numerik tip olan `u64` ü tip olarak vektöre atar.
+
+Bir vektörün içerisindeki bir değeri okumak için `get()` adlı metot kullanılır:
+
+```js
+let eight = v.get(1);
+
+match eight {
+    Option::Some(eight) => log(eight),
+    Option::None => revert(42),
+}
+```
+
+Yukarıdaki kod blokunda vektörün birinci indeksindeki değeri okumak istediğimizden `v.get(1)` ile o veriye erişip okuduk ve `eight` adlı değişkene atadık. `get()`
+metodu geriye doğrudan okuduğu değeri değil de bir `Option<T>` döndürür. Bunun amacı hataların önüne geçmektir çünkü vektörün kapsadığı index dışında bir değer okunmak
+istendiğinde program hata verecektir. Örneğin içerisinde üç tane veri tutan vektörün 10. indeksindeki veriyi okumak istersek böyle bir veri olmadığından program hata verir.
+Bunun önüne geçmek için `get()` metodu bir `Option<T>` döndürerek böyle bir durumda hata vermek yerine içerisindeki `None` değerini döndürecek ve program sağlıklı
+bir şekilde çalışmaya devam edecektir. Eğer veri varsa bu sefer de `Option<T>` içerisindeki `Some<T>` ile bize istenen değeri döndürür. Yukarıdaki gibi `match` ile eşleştirme
+yaparak iki durumu da değerlendirip sonuca erişebiliriz.
+
+Vektörler içerisindeki her bir elemana erişmek isteniyorsa bir iterasyon (döngü) ile sonuca erişilebilir:
+
+```js
+let mut i = 0,
+while i < v.len() {
+    log(v.get(i).unwrap());
+    i += 1;
+}
+```
+
+Yukarıdaki kod blokunda `v.len()` ile vektörün uzunluğuna eriştik ve her bir iterasyonda `get()` metodu ile vektör elemanlarını okuyup logladık. `unwrap()` metodu 
+`Option<T>` içerisindeki değeri doğrudan bize veren bir metottur, yani `match` ile tek tek işlemeden doğrudan değeri bize verir, ancak eğer bir hata söz konusu olursa
+program çalışmaz ve durur. Bu sebepten dolayı hata vermeyeceğini düşündüğümüz durumlarda `unwrap()` kullanmak makuldür. Örneğin yukarıdaki döngüde iterasyonun 
+`v.len()` ile kesin olarak bildiğimiz vektör uzunluğundan dışarı taşması mümkün olmayacağından hata vermeyecektir, bu yüzden `unwrap()` metodunu kullanabildik.
+
+Vektörlerin içerisindeki veriler aynı tipte olmak zorundadır, ancak farklı tipte verileri de bir vektör içerisinde tutmak `enum`lar ile mümkündür. Farklı tipte
+veriler içeren bir enum tanımladıktan sonra boş bir vektöre aslında tek bir tip olan enum tipiyle verileri gönderebiliriz:
+
+```js
+    enum MyTable {
+        Int: u64,
+        Boolean: bool,
+    }
+
+    let mut row = Vec::new();
+    row.push(MyTable::Int(3));
+    row.push(MyTable::Boolean(true));
+```
+
+Yukarıda farklı iki türde veri içeren bir enum tanımladık ve oluşturduğumuz boş vektöre değerlerimizi `MyTable` adlı enum üzerinden gönderdik. `push()` ile gönderdiğimiz
+veriler `MyTable` olarak tek bir tipte tanımlı olduğu için vektör içerisinde saklayabildik.
+
+Bazı kullanışlı vektör metotlarını hızlıca inceleyelim:
+
+```js
+    let vec = Vec::new();
+    vec.push(5);
+    vec.push(10);
+    vec.push(15);
+    let item = vec.remove(1);
+    assert(item == 10);
+```
+Yukarıda `remove()` adlı metot ile belli bir indeksteki değeri çıkartıp bir değişkene atadık. Artık `item` değişkeni 10' a eşit ve vektörün içerisinde 10 yok,
+sadece 5 ve 15 mevcut.
+
+```js
+    let vec = Vec::new();
+    vec.push(5);
+    vec.push(10);
+    vec.insert(1, 15);
+```
+
+`insert()` adlı metot istediğimiz bir indekse bir veriyi göndermek istediğimizde kullanılır. Yukarıda 1. indekse 15 değerini gönderdik, gönderdiğimiz değerden sonraki
+bütün değerleri ise sağa kaydırıldı. Yani 10 değeri son durumda 2. indekste mevcut.
+
+```js
+let vec = Vec::new();   // boş bir vektör oluşturduk
+
+let res = vec.pop();   // pop() metodu ile son elemanı çıkarmak istedik ancak vektör boş
+assert(res.is_none());   // dolayısıyla Option<T> içerisindeki None değerini döndürdü, bunu is_none() ile anlayabiliriz.
+
+vec.push(5);   // boş vektöre bir veri gönderdik
+let res = vec.pop(); // sonra pop() ile bu veriyi çıkarıp 'res' e atadık
+assert(res.unwrap() == 5);   // res değerinin 5 olduğunu test ettik
+assert(vec.is_empty());   // vektörün yeniden boş olduğunu is_empty() ile anladık
+```
+`pop()` adlı metot bir vektörün son elemanını çıkararak `Option<T>` ile geriye döndürür. Yukarıdaki kodlarda neler yaptığımızı yorum satırlarını 
+okuyarak inceleyebilirsiniz.
+
+### Storage Vektörü 
+
+Storage vektörü, kontrat programlarında kullanılan ve adından da anlaşılacağı üzere `Storage` içerisinde depolanan vektörlerdir. Storage sözcük anlamı 
+olarak `depo` ya da `saklama alanı` olarak çevrilebilir ancak Storage olarak akılda tutulması daha sağlıklı olacaktır. 
+Yalnızca kontrat programlarında kullanılabilir çünkü yalnızca kontrat programları Storage'a erişebilir ve okuyup yazabilir. Storage vektörünü kullanabilmek için
+öncelikle projemize dahil etmemiz gerekir:
+
+```js
+use std::storage::StorageVec;
+```
+
+Boş bir Storage vektörü oluşturmak için vektörümüzü `storage` blokunun içerisinde aşağıdaki gibi tanımlarız:
+
+```js
+v: StorageVec<u64> = StorageVec {},
+```
+
+Normal bir vektör tanımlamasına benzese de vektör süslü parantez `{}` kullanılır çünkü kendisi aslında yapı olarak bir struct'tır. Aynı zamanda Storage vektörü varsayılan
+olarak  değiştirilebilir olduğundan `mut` anahtar sözcüğü ile tanımlamaya gerek yoktur. Vektöre yeni değerler eklemek için yine `push()` metodu kullanılır: 
+
+```js 
+#[storage(read, write)]
+fn push_storage_vec() {
+    storage.v.push(6);
+    storage.v.push(7);
+    storage.v.push(8);
+    storage.v.push(9);
+}
+```
+
+Yukarıda kontrat programımızda bir fonksiyon oluşturduk ve bu fonksiyonun `Storage` a hem okuma (read) hem de yazma (write) izni var. Okuma izni 
+her defasında `push()` metodunun Storage'a gidip değerleri okuması için gereklidir, yazma izni ise `push()`metodunun vektöre verileri yazabilmesi için gereklidir.
+
+Storage vektörünü oluşturup içine verileri gönderdikten sonra belirli bir indeks numarasındaki veriyi okuyabilmek için `get()` metodu kullanılır:
+
+```js 
+#[storage(read)]
+fn read_from_storage_vec() {
+    let third = storage.v.get(2);
+    match third {
+        Option::Some(third) => log(third),
+        Option::None => revert(42),
+    }
+}
+```
+Yukarıdaki kodlarda fonksiyonun Storage'a sadece okuma izni var ve bu yeterli çünkü `get()` metodunun yazma özelliği yok ve sadece vektör içindeki verileri okuyabilme 
+işlevi var. Okumasını istediğimiz verinin indeks numarasını `get()` metoduna verdiğimizde bize `Option<T>` ile o veriyi geri döndürür. Tıpkı normal Vektörler kısmında
+anlatıldığı gibi, değeri istenen indeks numarasındaki verinin Storage vektörünün indeks uzunluğunu aştığı bir durumda hata ayıklaması yapabilmek
+ve programın çökmesi yerine `None` değerini döndürebilmek için `get()` metodu bir `Option<T>` döndürür ve `match` kullanarak işlenir.
+
+Storage vektöründeki değerlerin iterasyona sokulması işlemi de normal vektörlerde yapıldığı şekline çok benzer ve yine `get()` metodundan dönen `Option<T>` için 
+`unwrap()` kullanılır çünkü iterasyonda indeks dışına çıkmak olası değildir ve hata ayıklaması yapmaya gerek kalmaz.
+
+```js
+    #[storage(read)]
+    fn iterate_over_a_storage_vec() {
+        let mut i = 0;
+        while i < storage.v.len() {
+            log(storage.v.get(i).unwrap());
+            i += 1;
+        }
+    }
+```
+
+Storage vektörleri de tek tipte verileri kendisinde depolarlar. Farklı tipte verileri saklayabilmek için normal vektörlerde açıklanıldığı gibi yine bir `enum` tanımlanır
+ve farklı tipte veriler o enum içerisinde tutulur:
+
+```js
+enum TableCell {
+    Int: u64,
+    B256: b256,
+    Boolean: bool,
+}
+
+row: StorageVec<TableCell> = StorageVec {},
+```
+
+ Yukarıda `TableCell` adlı bir enum tanımladıktan sonra `row` adlı bir StorageVec tanımladık. Daha sonra `push()` metodu ile farklı tipte verilerimizi enum üzerinden
+ StorageVec'e göndererek saklayabiliriz:
+
+ ```js
+#[storage(read, write)]
+fn push_to_multiple_types_storage_vec() {
+    storage.row.push(TableCell::Int(3));
+    storage.row.push(TableCell::B256(0x0101010101010101010101010101010101010101010101010101010101010101));
+    storage.row.push(TableCell::Boolean(true));
+}
+```
+
+### Storage Map
+
+Standart kütüphaneye dahil olan veri tiplerinden birisi de `StorageMap<K, V>` dir. Bu koleksiyon tipinde anahtar - değer eşleşmesiyle veriler tutulur, yani `K` tipi
+verinin anahtarını (key) tanımlar, `V` tipi ise anahtar ile eşleşen değeri (value) tanımlar. Bu haliyle Rust dilindeki `HashMap<K, V>` e benzer ve jenerik tipte tanımlanmıştır.
+
+StorageMap' in özelliği verilerin anahtar - değer eşleşmesi ile kaydının tutulmasıdır. Bir vektörde veriyi ararken indeksini kullanırız ancak StorageMap'de bu veriyi
+indeks yerine `anahtar` ögesini kullanarak bulabiliriz ve anahtar herhangi bir tipte olabilir, sayısal bir değer olması şart değildir. Örneğin bir kontrat içerisinde
+kullanıcıların sahip olduğu cüzdan bakiyelerini tutmak için adres - bakiye eşleşmesi şeklinde veriler bir StorageMap içerisinde tutulabilir. 
+
+Storage Vektörlerinde olduğu gibi StorageMap de sadece bir kontrat üzerinde tanımlanabilir çünkü Storage'a sadece kontrat programları üzerinden erişilebilir.
+
+Yeni bir boş StorageMap oluşturmak için kontratın `storage` blokunda aşağıdaki gibi yazılır:
+
+```js
+map: StorageMap<Address, u64> = StorageMap {},
+```
+
+Yukarıda `map` adlı bir StorageMap tanımladık, tip atamasını `StorageMap<Address, u64>` şeklinde belirledik, yani anahtar (key) tipi bir `Address`, değer (value) tipi 
+de bir `u64`. StorageMap'in kendisi aslında bir struct olduğundan eşitliğin sağ tarafında `StorageMap {}` şeklinde boş bir struct yapısında oluşturarak başlattık.
+
+Bir StorageMap oluşturduktan sonra onu güncellemek için `insert()` metodu kullanılır. Yine `mut` anahtar sözcüğü ile tanımlamaya gerek yoktur çünkü varsayılan olarak
+değiştirilebilir (mutable) kılınmıştır.
+
+```js
+#[storage(read, write)]
+fn insert_into_storage_map() {
+    let addr1 = Address::from(0x0101010101010101010101010101010101010101010101010101010101010101);
+    let addr2 = Address::from(0x0202020202020202020202020202020202020202020202020202020202020202);
+
+    storage.map.insert(addr1, 42);
+    storage.map.insert(addr2, 77);
+
+    let value1 = storage.map.get(addr1).unwrap_or(0);
+}
+```
+Yukarıdaki kodlarda yazılabilir (write) olarak tanımlanmış bir fonksiyon tanımladık ve iki ayrı `Address` tipinde veri oluşturduk. Daha sonra `insert()` metodu ile
+bu Address tipindeki anahtar veriyi onun karşısında tutulacak değere atayarak StorageMap'i güncelledik. 
+
+StorageMap içerisindeki verilere erişmek için ise `get()` metodu kullanılır. Yukarıda `get()` metodu içerisine hangi anahtarın karşılığı olan değeri getirmek istiyorsak 
+o anahtarı yazıp karşılığında tuttuğu değere erişebiliriz. Diğer koleksiyon tiplerinde olduğu gibi burada da `get()`  metodu geriye bir `Option<T>`
+döndürdüğünden yeni bir metot olan `unwrap_or()` ile bu `Option<T>` 'ı işledik. `unwrap_or()` metodu eğer geriye bir değer döndürüyorsa bunu alır ve `value1` adlı 
+değişkene eşitler, eğer bir değer döndürmüyorsa yani `Option<T>` dan `None` döndürüyorsa bu sefer içerisine hangi değer yazılmışsa onu `value1` 'e eşitler. 
+Yani yukarıdaki kodlarda `unwrap_or(0)` olarak tanımlandığından 0 değerini `value1` e eşitleyecektir. 
+
+StorageMap içerisinde anahtar tipi olarak bir `tuple` tanımlamak mümkündür:
+
+```js
+map_two_keys: StorageMap<(b256, bool), b256> = StorageMap {},
+```
+

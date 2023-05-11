@@ -1,0 +1,58 @@
+# Ethereum'a Giriş: Temel Terimler
+
+Ethereum, merkezi olmayan uygulamaları (dApps) çalıştırmak için kullanılan bir blokzinciridir. Ethereum programlama konularına yönelik çalışmalarınıza başlamadan önce, aşağıdaki temel terimleri anlamanız önemlidir.
+
+---
+
+## Blokzincir
+
+Blokzincir, bir dizi blokun birbirine bağlanarak oluşturduğu dağıtılmış bir veri tabanıdır. Her blok, geçerli bir blok özeti ve bir önceki blokun özeti ile bağlantılıdır. Bu bağlantılar sayesinde, bir blokun içeriği değiştirildiğinde blokzincirinin geri kalanı da etkilenir.
+
+## Ethereum
+
+Ethereum blokzinciri üzerinde akıllı uygulama çalıştırmaya olanak sağlayan merkeziyetsiz ve açık kaynak kodlu bir blokzincir projesidir.
+
+## Akıllı Sözleşmeler
+
+Akıllı sözleşmeler, programlanabilir kod bloklarıdır ve otomatik olarak çalışır. Bu sözleşmeler, belirli şartların gerçekleşmesi durumunda işlemleri gerçekleştirir. Örneğin, bir akıllı sözleşme, bir kullanıcının bir diğer kullanıcıya kripto para göndermesi için belirli bir miktar para ve alıcının Ethereum adresi gibi şartları belirleyebilir. Akıllı sözleşmeler, güvenli bir şekilde işlemleri gerçekleştirmeye olanak tanır ve aracıların rolünü ortadan kaldırır.
+
+<div style={{width:'100%', display:'flex', justifyContent:'center', margin:'0 0'}}>
+<img
+  src={require('./img/smart-contract.png').default}
+  alt="Decentralized App architecture"
+  width="%100"
+/>
+</div>
+
+## Decentralized Application (dApp)
+
+Web3 uygulamaları, merkezi olmayan bir yapıya sahip olduğu için Web2 uygulamalarından oldukça farklı bir mimariye sahiptir. Web3 uygulamaları, genellikle blokzincir teknolojisi üzerine inşa edilir. Bu nedenle, Web3 uygulamalarının mimarisinde, akıllı sözleşmeler (smart contracts) ve Ethereum Virtual Machine (EVM) önemli bir rol oynar. Akıllı sözleşmeler, programlanabilir kod bloklarıdır ve Web3 uygulamalarında, kullanıcıların birbirleriyle etkileşimde bulunması ve işlemleri gerçekleştirmesi için kullanılır. EVM ise, bu akıllı sözleşmelerin çalışması için gereken sanal bir makinedir. Web3 uygulamalarının kullanıcı arayüzleri, genellikle web tarayıcıları üzerinden erişilebilir ve JavaScript, HTML ve CSS gibi Web2 uygulamalarında kullanılan teknolojilerle tasarlanabilir. Ancak, Web3 uygulamaları, Web2'den farklı olarak, kullanıcıların özel anahtarları ve kimlik doğrulama gereksinimleri gibi ekstra güvenlik önlemleri de içerebilir.
+
+dApp'ler birçok farklı amaç için kullanılabilir. Bunlar arasında finansal işlemler, oyunlar ve sosyal ağlar yer alır. Finansal işlemler, özellikle kripto para birimleri kullanarak yapılan işlemler, dApp'lerin en yaygın kullanım alanıdır. Kullanıcılar, merkezi bir borsaya ihtiyaç duymadan, dApp'ler aracılığıyla kripto para birimlerini alabilir, satabilir ve takas edebilir.
+
+Özetle, dApp'ler, Blokzincir teknolojisi sayesinde merkezi olmayan uygulamalar sunar ve finansal işlemler, oyunlar ve sosyal ağlar gibi farklı amaçlar için kullanılabilirler.
+
+<div style={{width:'100%', display:'flex', justifyContent:'center', margin:'0 0'}}>
+<img
+  src={require('./img/dapp-architecture.png').default}
+  alt="Decentralized App architecture"
+  width="700"
+/>
+</div>
+
+
+## İşlem (transaction) ve İşlem Ücreti (Gas)
+
+Blokzincirdeki her işlemin bir maliyeti vardır. Dolayısıyla, bir token oluşturmak/almak/satmak veya herhangi bir işlem yapmak istediğinizde, işlem ücreti ödemeniz gerekir.
+
+[Ethereum'un web sitesine](https://ethereum.org/tr/developers/docs/transactions/) göre _işlem_ şu şekilde tanımlanmıştır.
+
+> Bir Ethereum işlemi, harici olarak sahiplenilmiş bir hesap tarafından başlatılan bir eylemi ifade eder, başka bir deyişle, bir sözleşme değil, bir insan tarafından yönetilen bir hesap. Örneğin Bob, Alice'e 1 ETH gönderirse, Bob'un hesabı borçlandırılmalı ve Alice'inki alacaklandırılmalıdır. Bu durum değiştirme eylemi bir işlem içinde gerçekleşir.
+
+_Gas_, bir işlemin maliyetini gösteren birimin ölçüsüdür ve işlemlerin gerçekleşebilmesi için gereken yakıt gibi düşünülebilir.
+
+_Gas limiti_, bir işlemin gerçekleşmesi için yapılacağı tahmin edilen maksimum iş miktarıdır, bu yüzden her işlemin gerektirdiği gas miktarı aynı değildir.
+
+_Gas fiyatı_ yapılan iş birimi başına fiyattır. Ethereum ağında gas fiyatı ETH cinsinden ödenir ve gwei (1E-9 ETH) olarak gösterilir. Dolayısıyla, bir işlem maliyeti gas limitinin gas fiyatıyla çarpımıdır.
+
+`İşlem ücreti = Gas limiti * Gas fiyatı`

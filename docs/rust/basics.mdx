@@ -1,0 +1,237 @@
+---
+sidebar_position: 2
+---
+# Rust'ın Temelleri
+
+Bu bölümde bir Rust programının temel konularına giriş yapacağız. Bunlar bütün programlama dillerinde olan ya da birbirlerine
+benzeyen temel kavramlardan bazılarını içermektedir.
+
+## Hello World
+
+Cargo ile oluşturduğumuz bir projede varsayılan olarak ekrana "Hello World!" yazdırılan küçük bir programla başlanır. "src" dosyasının
+içerisindeki main.rs adlı dosyayı açtığımızda aşağıdaki kod söz dizimini görürüz:
+
+```js
+fn main() {
+    println!("Hello, world!");
+}
+```
+Bu kod satırlarında "main" adında bir fonksiyon tanımlıdır. `main` özel bir fonksiyondur, bütün Rust programları bu fonksiyonla başlar.
+`fn` anahtar sözcüğü ile bir fonksiyon tanımlanacağı belirtilir ve ardından bu fonksiyonun adı yazılır. Fonksiyon adından sonra
+parantez açılarak fonksiyonun parametreleri girilir, parametre almayacaksa boş bırakılır. Fonksiyonun içerdiği kodlar için bir
+süslü parantez açılır, buna fonksiyon gövdesi denir.
+
+`main` fonksiyonunun gövdesinde içerdiği metni ekrana yazdıran bir kod satırı bulunur. Rust'ta ekrana metin vb bir şey yazdırmak için
+`println!()` makrosu kullanılır.
+
+Rust'ta bir kod satırı ifadesi (expression) mutlaka noktalı virgül (;) ile sonlandırılmalıdır. Noktalı
+virgül ile sonlandırılmayan durumlar da mevcuttur, bunları ilerleyen konularda yeri geldiğinde belirteceğiz.
+
+### Rust Projesini Derlemek ve Çalıştırmak
+
+Bir Rust projesini çalıştırmadan önce onu derlemeniz (compile) gerekir. Derleme işlemi yazdığınız kodların makine diline çevrilerek
+bilgisayarın çalıştırabileceği formata getirilmesidir. Bunun için `cargo build` komutu kullanılarak derleme işlemi yapılır, derleme
+bittikten sonra dosya ağacında `target` adlı bir klasör ve `Cargo.lock` adlı bir dosya belirir.
+
+`target` klasörü içerisinde programınızın derlendikten sonraki çalıştırılabilir (executable) dosyası bulunur. `Cargo lock` dosyası içine ise
+programınızın bağımlılıkları (dependencies) hakkında bir takım bilgiler otomatik olarak kaydedilir.
+
+ `cargo build` komutu ile programınız derlenir ancak çalıştırılmaz, çalıştırmak için `cargo run` komutu ile programınızı çalıştırabilirsiniz.
+Eğer en başta `cargo build` demeden sadece `cargo run` komutunu çalıştırırsanız programınız önce otomatik olarak derleme işlemini yapar sonra çalıştırılır.
+
+## Veriler ve Veri tipleri
+
+Rust programlama dilinde her değerin bir tipi vardır ve verilere tip ataması statik olarak yapılır. Yani Rust, derleme zamanında bütün verilerin
+tipini atanmış olarak bilmek ister. Eğer verilerin tipi manuel olarak atanmamışsa kendisi bir çıkarım yaparak varsayılan tip atamasını
+otomatik olarak yapar. Verinin tipini çıkaramadığı durumlarda ise uyarı vererek mutlaka tip atamasının yapılmasını ister.
+
+### Değişken Atamak
+
+```js
+fn main() {
+    // değişken atamak için let anahtar sözcüğünü kullanırız
+    let x = 1;
+}
+```
+
+Yukarıdaki kod blokunda ilk satırda `//` ile başlayan kısım yorum satırıdır ve derleyici tarafından görmezden gelinir. Yorum satırlarının amacı kod okunurluğunu
+ve anlaşılırlığını arttırmaktır.
+
+Rust'ta değişken tanımlamak için `let` anahtar sözcüğü kullanılır. Bu bütün veri tipleri için geçerlidir.
+Yukarıdaki kod blokunda let anahtar sözcüğü kullanılarak "x" adlı bir değişken tanımlanmış ve değeri 1'e eşittir.
+
+Rust'ta her değişkenin bir tipi vardır ve atanmak zorundadır. Eğer değişkenin tipini atamazsanız Rust arka planda varsayılan olarak tanımlanan
+tip atamasını yapar. Örneğin yukarıdaki "x" değişkenini değeri bir `integer` yani tam sayıdır ve biz tip atamasını yapmadığımız için
+Rust arka planda integer için varsayılan olan "i32" tipini atar.
+
+Manuel olarak tip ataması ise şu şekilde yapılır:
+
+```
+let x: i32 = 1;
+```
+
+### Verilerin Değiştirilmezliği
+
+Rust'ta değişkenler ilk atandığında varsayılan olarak "immutable" yani değiştirilemez olarak tanımlanırlar.
+Aşağıdaki kodu derlediğinizde hata verecektir:
+
+```js
+fn main() {
+    let x: i32 = 1;
+    x = 5;
+}
+```
+
+"x" değişkeninin değerini 5 yapmaya çalıştığımızda hata alırız çünkü varsayılan olarak x değişkeni değiştirilemez.
+Rust'ta bir değişkeni değiştirebilmek için `mut` anahtar sözcüğü kullanılmalıdır.
+
+```js
+fn main() {
+    let mut x: i32 = 1; // x'in değeri 1'e eşit
+    x = 5; // artık x'in değeri 5'e eşit
+}
+```
+### Sabit değerler
+
+Sabit değerler (constants) "mut" anahtar sözcüğünün kullanılamadığı ve hiçbir zaman değiştirilmeyen değerlerdir. `let` yerine
+`const` anahtar sözcüğü alarak atanırlar ve tip ataması mutlaka yapılmalıdır. Sabit değerlerin adları her zaman büyük harflerle yazılır.
+
+```js
+const MYVAL: i32 = 61;
+```
+
+### Skaler Veri tipleri
+
+Skaler tipler tek bir değere eşit olan veri tipleridir, yani birden fazla değişkeni tutmak için kullanılmazlar. Rust'ta dört farklı
+skaler veri tipi vardır: tam sayılar (integers), kayan noktalı sayılar (floating point numbers), mantıksallar (booleans) ve karakterler (characters).
+
+#### Tam sayılar
+
+Tam sayılar adından da anlaşılacağı üzere kesirli bileşeni olmayan sayılardır. Doğal sayılar ve onların negatiflerinden oluşurlar.
+Rust'ta kapladığı boyuta göre birden fazla tam sayı tipi bulunur.
+
+| **Boyut** | **İşaretli** | **İşaretsiz** |
+| :----- | :----: | ----: |
+| 8-bit| i8 | u8 |
+| 16-bit | i16  |  u16 |
+| 32-bit | i32 | u32 |
+| 64-bit | i64 | u64 |
+| 128-bit | i128 | u128 |
+
+Yukarıdaki tabloda Rust'ta bir tam sayının alabileceği tipler listelenmektedir. İşaretli tipler negatif sayı da alabilirken işaretsiz tipler
+sadece pozitif sayılardan oluşur. Her tam sayı değerinin boyutu atandığı tipe göre değişir. Örneğin sayının tipi `i16` ise bellekte 16 bit yer kaplar,
+Her tip için belli aralıklarda sayılar tutulabilir, bunun için bir formül kullanılarak o tipin o sayıyı saklayıp saklayamayacağı anlaşılabilir:
+
+`n` bit sayısını temsil etmek üzere işaretli sayılar için `-(2^(n - 1)) den 2^(n - 1) - 1 e kadar` işaretsiz sayılar için `0 dan 2^n - 1 e kadar` olan aralıktaki sayılar o tamsayı tipi için
+o değeri alabilir.
+
+Örneğin "i8" tipinde bir tam sayı n=8 olmak üzere formülde yerleştirip işlem yapıldığında -128 ile 127 aralığında bütün sayıları tutabilir. Eğer bu sayı aralığında
+olmayan örneğin 211 sayısı i8 tipinde tutulmak istenirse aralık dışında olacağından atanamaz.
+
+Tablodakiler dışında tam sayılar için atanabilecek iki tip daha vardır, bunlar `isize` ve `usize` olmak üzere iki tanedir. Bu iki tip atandığında
+bilgisayarın işlemci mimarisi kaç bitse otomatik olarak onu atat, örneğin tam sayının tipi "isize" olarak belirlenmişse ve bilgisayar 32 bitlikse i32
+olarak, 64 bitlikse i64 olarak tip ataması yapılır.
+
+#### Kayan Noktalı Sayılar
+
+Rust iki farklı kayan noktalı sayı tipine sahiptir, bunlar `f32`ve `f64` olmak üzere 32 bitlik ve 64 bitlik olarak tanımlanırlar. Eğer tip ataması
+manuel olarak yapılmazsa Rust derleyicisi varsayılan olarak f64 atayacaktır. Kayan noktalı sayıların hepsi işaretli olarak tanımlanmıştır, yani
+negatif ve pozitif değerler alabilirler.
+
+```js
+fn main() {
+    let x = 3.0;  // tip ataması yapılmadığından varsayılan olarak f64 atanır.
+
+    let y: f32 = 6.4;
+}
+```
+#### Sayısal İşlemler
+
+Rust'ta toplama, çıkarma, çarpma ve bölme gibi temel matematiksel işlemler diğer programlama dillerindekine benzer şekilde yapılır.
+Tam sayıların bölümünde çıkan sonuç sıfıra en yakın olan tam sayıya yuvarlanır. Örneğin 2.8 sayısı 2 ye yuvarlanır.
+
+```js
+fn main() {
+    // toplama
+    let toplam = 8 + 5;
+
+    // çıkarma
+    let fark = 23.6 - 8.3;
+
+    // çarpma
+    let carp = 4 * 30;
+
+    // bölme
+    let bolum = 64.7 / 30.4;
+    let x = -5 / 3; // Sonuç -1 e yuvarlanır.
+    let y = 14 / 5; // Sonuç 2 ye yuvarlanır.
+
+    // bölümden kalanı bulma
+    let kalan = 43 % 5;
+}
+```
+
+#### Mantıksal (Boolean)
+
+Diğer çoğu dilde olduğu gibi Rust'ta da mantıksal (boolean) tipte iki değer bulunur: `true` ve `false`. `bool`
+yazılarak tip ataması yapılır ve bellekte 1 byte yer tutarlar.
+
+```js
+fn main() {
+    let x = true;
+
+    let y: bool = false;
+}
+```
+#### Karakter (char)
+
+`char` karakterleri temsil eden bir tiptir. Her karakterin bir sayı karşılığı vardır, örneğin büyük harfli "M" nin
+sayı karşılığı 77, küçük harfli "m" nin ise 109'dur. Bütün bu numara karşılıklarına Unicode denilir.
+Rust'ta char tipi tek tikli tırnak işaretiyle oluşturulur ve bellekte 4 byte yer kaplarlar.
+
+```js
+let my_char = 'm';
+let space = ' '; // boşluk da bir char tipidir.
+let emoji = '😺' // emojiler de bir char tipidir.
+```
+### Koleksiyon Tipler
+
+Koleksiyon tiplerde tek bir değer yerine birden fazla değer bir tipe atanır. Bu kısımda iki farklı temel koleksiyon
+tipini ele alacağız.
+
+#### Tuple
+
+Tuple, birden fazla değerin bir arada toplanarak tek bir tip oluşturmanın yollarından birisidir. Tuple tipte değerler
+aynı ya da farklı türde olabilir ve bir kez oluşturulduktan sonra boyutu değiştirilemez, değer ekleme ya da çıkarma yapılamaz.
+Tuple oluşturmak için değerler iki parantez `()` arasına yazılır, manuel tip ataması da aynı şekilde yapılır.
+
+```js
+fn main() {
+    let tup: (i32, f64, u8) = (50, 6.8, 1); // tuple elemanları farklı tiplerden oluşabilir
+    let fifty = tup.0; // tuple elemanlarına index numarası ile erişebiliriz
+    let (x, y, z) = (12, 56, 3.4); // tuple elemanlarının her birisini bir değişkene atayabiliriz
+}
+```
+
+#### Array (Dizi)
+
+Birden fazla değeri bir tipe atamanın yollarından birisi de dizilerdir. Ancak dizileri oluşturan elemanların türleri aynı olmalıdır.
+Diziler de tuple gibi sabit boyuttadır, eleman ekleme ve çıkarma yapılamaz. Array (dizi) ataması yapmak için köşeli parantez `[]` kullanılır.
+Manuel tip ataması yaparken ilk eleman dizi elemanlarının tipini, ikinci eleman ise dizinin boyutunu (length) belirtir.
+
+```js
+fn main() {
+    let a: [i32; 6] = [1, 2, 3, 4, 5, 6]; // [i32; 6] ilk eleman tip, ikinci eleman boyut (length)
+    let birinci_eleman = a[0]; // dizinin elamanlarına index numarası ile bu şekilde erişebiliriz
+    let dorduncu_eleman = a[3]; // index numaraları her zaman 0 dan başlar
+}
+```
+Bir dizinin elemanları aynı değerden oluşuyorsa o diziyi şu şekilde de başlatabiliriz:
+
+```js
+fn main() {
+    let a = [3; 6]; // dizinin eşdeğeri a = [3, 3, 3, 3, 3, 3]
+}
+```
+Yukarıdaki kodda dizinin ilk elemanı olan 3 sayısı dizimizin içindeki değeri temsil eder, ikinci elaman olan 6 sayısı ise dizinin
+boyutunu (length) temsil eder. O halde yukarıdaki dizi altı tane 3 sayısından oluşan bir dizidir.

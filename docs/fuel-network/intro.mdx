@@ -1,0 +1,36 @@
+---
+sidebar_position: 1
+---
+# Giriş
+
+Bir blokzincirde olması beklenen üç temel özellik vardır, bunlar merkeziyetsizlik, güvenlik ve ölçeklenebilirlik kavramlarıdır. Ancak
+blokzincirler bu üç özellikten yalnızca ikisine sahip olabilirler, örneğin sizin merkeziyetsiz ve güvenli bir ağ istiyorsanız ölçeklenebilirlik
+özelliğinden feragat etmeniz gerekecektir.
+
+Ethereum güvenli ve merkeziyetsiz bir blokzincir teknolojisi sağlasa da ölçeklenebilirlik konusunda geliştirilecek çözümlere ihtiyaç duymaktadır.
+Ağın yoğun bir şekilde kullanımı sonucu oluşan işlem ücretlerinin pahalılığı konusunda geliştirilen çözümler doğrultusunda "Layer 2" adı verilen
+ikinci katman blokzincirler ortaya çıkmıştır. Bu blokzincirlerin amacı birtakım kompleks işlemleri Ethereum ağı dışında yaparak basitleştirip Ethereum ağına
+işlemek ve böylece Ethereum ağının tıkanıklığını ve yüksek işlem ücretlerini düşürmektir.
+
+İkinci katman çözümleri arasında "rollup" adı verilen ölçeklendirme teknolojisi tercih edilmektedir. Bu teknoloji ile yüzlerce işlem toplanarak tek bir işlem halinde
+birinci katmana yani Ethereum ağına işlenir. Günümüzde Ethereum ekosistemi için geliştirilen ikinci katman ölçeklendirme teknolojilerinden
+birisi de Fuel Network'tür.
+
+## Fuel Network Nedir?
+
+Fuel Network, Ethereum için geliştirilen ilk optimistik rollup'tır. Fuel Labs tarafından geliştirilmeye başlanmış ve 2020 yılının sonlarına doğru ilk
+versiyonu (Fuel V1) yayınlanmıştır. Günümüzde ise V2 versiyonu ile monolitik yapıda olan birinci katman blokzincirler için modüler yürütme katmanı olma yolunda
+geliştirilmeye devam etmektedir.
+
+Blokzincir projelerinin dört işlevi vardır, bunlar:
+
+- Yürütme (execution)
+- Konsensüs (consensus)
+- Uzlaşma (settlement)
+- Veri erişilebilirliği (data availability)
+
+Monolitik blokzincirlerde yukarıdaki işlevlerin hepsi tek bir katmanda yer alırken modüler yapıda bir blokzincirde bu işlevler farklı modüllere ayrılarak
+kontrol ve esnekliği arttırıp ölçeklenebilirlik ve performansa katkıda bulunurlar. Fuel de modüler yapıda tasarlanan blokzincirlerden biridir.
+Paralel işlem yürütme modeliyle birden çok işlemi aynı anda gerçekleştirebilen bir yapıya sahip en hızlı modüler yürütme katmanıdır. FuelVM adında
+kendi sanal makinesine sahiptir ve "Sway" adlı programlama diliyle birlikte geliştirilmiştir. Sway, akıllı kontratlar geliştirmek için kullanılan Rust
+tabanlı bir programlama dilidir ve tasarlanırken Rust ve Solidity'den ilham alınmıştır.

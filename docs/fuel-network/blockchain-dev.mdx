@@ -1,0 +1,458 @@
+# Sway ile Blokzincir Geliştirme
+
+Sway programlama dili esas olarak blokzincir uygulamaları geliştirmek için oluşturulmuş bir dildir. Bu amaçla blokzincir özelinde birtakım özelliklere ve yapılara
+ihtiyaç duyar, genel amaçlı olarak kullanılan Rust, C++ gibi dillerden bu yönleriyle ayrılır. 
+
+Bu bölümde Sway diliyle Fuel ekosisteminde blokzincir uygulamaları geliştirirken kullanılabilecek bazı konseptlerden bahsedeceğiz.
+
+## Hash fonksiyonları
+
+Blokzincir teknolojisindeki en önemli işlevlerden biri olan `hash` kavramı için Sway standart kütüphanesinin sağladığı `sha256` ve EVM uyumlu `keccak256`
+hash fonksiyonları mevcuttur. 
+
+Bir `script` programı yazarak bu iki fonksiyonun kullanımını ele alalım:
+
+```js
+script;
+
+use std::hash::{keccak256, sha256};
+
+const MY_VALUE = 0x9280359a3b96819889d30614068715d634ad0cf9bba70c0f430a8c201138f79f;
+```
+
+Yukarıdaki kodlarda ilk önce program türünü belirten `script` tanımlaması yapıldıktan sonra iki hash fonksiyonu olan `keccak256` ve `sha256` programa dahil 
+edilmiş. Son olarak `MY_VALUE` adında `b256` tipinde bir sabit değer tanımlanmış.
+
+```js
+enum Location {
+    Earth: (),
+    Mars: (),
+}
+
+struct Person {
+    name: str[4],
+    age: u64,
+    alive: bool,
+    location: Location,
+    stats: Stats,
+    some_tuple: (bool, u64),
+    some_array: [u64; 2],
+    some_b256: b256,
+}
+
+struct Stats {
+    strength: u64,
+    agility: u64,
+}
+```
+Daha sonra lokasyon (konum) bilgisini tutan ve iki farklı değeri olan `Location` adlı bir enum, kişi bilgilerini tutan `Person` adlı bir struct ve kişi istatistiklerini
+tutan `Stats` adlı bir struct tanımlanmış. 
+
+```js
+fn main() {
+    let zero = b256::min();
+
+    let sha_hashed_u8 = sha256(u8::max());
+    let sha_hashed_u16 = sha256(u16::max());
+    let sha_hashed_u32 = sha256(u32::max());
+    let sha_hashed_u64 = sha256(u64::max());
+
+    let sha_hashed_b256 = sha256(VALUE_A);
+
+    let sha_hashed_bool = sha256(true);
+
+    let sha_hashed_str = sha256("Fastest Modular Execution Layer!");
+
+    let sha_hashed_tuple = sha256((true, 7));
+
+    let sha_hashed_array = sha256([4, 5, 6]);
+
+    let sha_hashed_enum = sha256(Location::Earth);
+
+    let sha_hashed_struct = sha256(Person {
+        name: "John",
+        age: 9000,
+        alive: true,
+        location: Location::Mars,
+        stats: Stats {
+            strength: 10,
+            agility: 9,
+        },
+        some_tuple: (true, 8),
+        some_array: [17, 76],
+        some_b256: zero,
+    });
+
+/// devamı var...
+```
+
+Yukarıda önce `script` programlarının bir gerekliliği olan `main()` fonksiyonu başlatılıyor ve fonksiyon gövdesinde birtakım değerler tanımlanıyor. 
+`sha256` hash fonksiyonuna farklı tipte değerler gönderilerek fonksiyondan dönen hash değerleri alınıyor. Şimdi `sha256` fonksiyonuna gönderilerek
+hash değerleri alınabilecek farklı tipleri yukarıdaki kodlar üzerinden inceleyelim.
+
+- `b256` tipinde tanımlanabilecek en küçük değer `min()` metoduyla bulunarak `zero` adlı değişkene eşitlenmiş. Bu değişken ileride struct içerisinde 
+kullanılan bir değer olacak.
+```js
+let zero = b256::min();
+```
+
+- Farklı bayt değerinde tam sayıların (integer) hash değerini alabiliriz. Aşağıda farklı bayt tiplerinde alınabilecek en büyük değer `max()` metodu ile bulunup
+hash değerleri alınmış:
+```js
+let sha_hashed_u8 = sha256(u8::max());
+let sha_hashed_u16 = sha256(u16::max());
+let sha_hashed_u32 = sha256(u32::max());
+let sha_hashed_u64 = sha256(u64::max());
+```
+- `b256` tipinde bir değerin de hash değerini alabiliriz. Aşağıda, programın en başında tanımlanan `VALUE_A` sabitinin hash değeri alınıyor:
+```js
+let sha_hashed_b256 = sha256(VALUE_A);
+```
+
+- Mantıksal (boolean) değerlerin hash değerini alabiliriz:
+```js
+let sha_hashed_bool = sha256(true);
+```
+
+- String tipinde ifadelerin hash değerini alabiliriz:
+```js
+let sha_hashed_str = sha256("Fastest Modular Execution Layer!");
+```
+
+- Tuple tipinde değerleri de hash fonksiyonu ile değerlendirebiliriz
+```js
+let sha_hashed_tuple = sha256((true, 7));
+```
+
+- Array yani dizi tipinde verilerin hash değerini alabiliriz:
+```js
+let sha_hashed_array = sha256([4, 5, 6]);
+```
+
+- Enum tipinde verilerin hash değerini bulabiliriz:
+```js
+let sha_hashed_enum = sha256(Location::Earth);
+```
+
+- Struct gibi daha kompleks veri tiplerinin bile hash değerleri bulunabilir:
+```js
+let sha_hashed_struct = sha256(Person {
+    name: "John",
+    age: 9000,
+    alive: true,
+    location: Location::Mars,
+    stats: Stats {
+        strength: 10,
+        agility: 9,
+    },
+    some_tuple: (true, 8),
+    some_array: [17, 76],
+    some_b256: zero,
+});
+```
+
+Şimdi bu hash değerleri alınmış bütün verilerin sonucunu görmek için `log()` metodunu kullanabiliriz. `log()` metodu herhangi bir işlemin sonuç çıktısını görebilmek
+ya da birtakım verilerin kayıtlarını kodun istediğiniz aşamasında belli bir amaç için tutmak üzere kullanılabilir.
+
+```js
+// ...
+
+log(sha_hashed_u8);
+log(sha_hashed_u16);
+log(sha_hashed_u32);
+log(sha_hashed_u64);
+log(sha_hashed_b256);
+log(sha_hashed_bool);
+log(sha_hashed_str);
+log(sha_hashed_tuple);
+log(sha_hashed_array);
+log(sha_hashed_enum);
+log(sha_hashed_struct);
+```
+
+Şimdi aynı süreci `keccak256` hash fonksiyonu için de yapalım. Aşağıdaki kodlarda farklı tipte verilerin `keccak256()` fonksiyonu ile nasıl hash değerlerinin 
+alındığı ve bunların çıktı kayıtlarının alınması gösteriliyor. Yorum satırlarındaki açıklamalarda ayrıntıları okuyabilirsiniz.
+
+```js
+// Tam sayı (integer) tipinde verilerin hash değeri alınabilir
+    let keccak_hashed_u8 = keccak256(u8::max());
+    let keccak_hashed_u16 = keccak256(u16::max());
+    let keccak_hashed_u32 = keccak256(u32::max());
+    let keccak_hashed_u64 = keccak256(u64::max());
+
+    // b256 tipinde değerlerin hash değeri alınabilir
+    let keccak_hashed_b256 = keccak256(VALUE_A);
+
+    // Mantıksal (boolean) tipinde verilerin hash değeri alınabilir
+    let keccak_hashed_bool = keccak256(true);
+
+    // String tipinde...
+    let keccak_hashed_str = keccak256("Fastest Modular Execution Layer!");
+
+    // Tuple tipinde...
+    let keccak_hashed_tuple = keccak256((true, 7));
+
+    // Array yani dizilerde...
+    let keccak_hashed_array = keccak256([4, 5, 6]);
+
+    // Enum tipinde...
+    let keccak_hashed_enum = keccak256(Location::Earth);
+
+    // Struct tipinde...
+    let keccak_hashed_struct = keccak256(Person {
+        name: "John",
+        age: 9000,
+        alive: true,
+        location: Location::Mars,
+        stats: Stats {
+            strength: 10,
+            agility: 9,
+        },
+        some_tuple: (true, 8),
+        some_array: [17, 76],
+        some_b256: zero,
+    });
+
+    // Bütün hash değerlerinin çıktıları log() ile gösterilebilir:
+    log(keccak_hashed_u8);
+    log(keccak_hashed_u16);
+    log(keccak_hashed_u32);
+    log(keccak_hashed_u64);
+    log(keccak_hashed_b256);
+    log(keccak_hashed_bool);
+    log(keccak_hashed_str);
+    log(keccak_hashed_tuple);
+    log(keccak_hashed_array);
+    log(keccak_hashed_enum);
+    log(keccak_hashed_struct);
+}
+```
+
+Görüldüğü üzere, Sway ile blokzincir ekosisteminde en yaygın olarak kullanılan hash fonksiyonları olan `sha256` ve `keccak256` ile birçok farklı tipte verinin
+hash değerini bulmak oldukça kolaydır. 
+
+## İmza Kurtarma (Signature Recovery)
+
+Blokzincirde gerçekleştirilen işlemlerin güvenliği imza doğrulama işlemleriyle ele alınır. Bir işlemi gerçekleştirebilmek için dijital imza kullanılır ve bu imza o 
+işlemin gerçekliğini doğrular.
+
+Normalde, bir imzanın açık anahtarını (public key) ve blokzincir adresini elde etmek için imzalayan kişinin özel anahtarına (private key) ihtiyaç vardır. 
+Ancak imza kurtarma (signature recovery) yöntemi, imzadan elde edilen bazı veriler kullanılarak imzayı atan kişinin açık anahtarına ve blokzincir adresine geriye dönük 
+olarak erişilebilmesini sağlar.
+
+Sway kütüphanesinde imza kurtarma işlemleri için kullanılabilecek birtakım fonksiyonlar mevcuttur. Aşağıdaki `script` programında bunun nasıl yapılacağını inceleyelim.
+
+```js
+script;
+
+use std::{b512::B512, ecr::{ec_recover, ec_recover_address, EcRecoverError}};
+
+const MSG_HASH = 0xee45573606c96c98ba970ff7cf9511f1b8b25e6bcd52ced30b89df1e4a9c4323;
+
+fn main() {
+    let hi = 0xbd0c9b8792876713afa8bff383eebf31c43437823ed761cc3600d0016de5110c;
+    let lo = 0x44ac566bd156b4fc71a4a4cb2655d3dd360c695edb17dc3b64d611e122fea23d;
+    let signature: B512 = B512::from((hi, lo));
+
+    // Kurtarılmış public key (açık anahtar)
+    let public_key = ec_recover(signature, MSG_HASH);
+
+    // Kurtarılmış Fuel adresi
+    let result_address: Result<Address, EcRecoverError> = ec_recover_address(signature, MSG_HASH);
+    if let Result::Ok(address) = result_address {
+        log(address.value);
+    } else {
+        revert(0);
+    }
+}
+```
+
+İlk önce program türü olan `script` tanımından sonra Sway standart kütüphanesinden birtakım fonksiyonlar programa dahil ediliyor. `B512` tipi iki ayrı 
+`b256` tipini bir arada tutan ve böylece 64- bitlik değerleri kullanabilmeyi sağlayan bir sarmalayıcı araçtır. `ecr` ise imza kurtarma için kullanılan 
+fonksiyonların bulunduğu bir kütüphane.
+
+Bir sonraki kod satırında `b256` tipinde bir mesaj özeti `MSG_HASH` adlı bir sabitte tutuluyor. Bu sabit, imza kurtarma işlemi için gerekli olan mesajın 
+hash değerini temsil eder.
+
+Daha sonra `main()` fonksiyonu içerisinde `B512` türünden bir imza verisi oluşturuluyor, bunun için iki ayrı `b256` tipinde değer alınarak `B512::from((hi, lo));`
+ifadesi ile tip dönüşümü yapılarak `signature` adlı değişkene atanıyor.
+
+`let public_key = ec_recover(signature, MSG_HASH);` ifadesinde `ec_recover()` adlı fonksiyon kullanılarak imza verisinden `public key` yani `açık anahtar`
+çıkartılıyor.
+
+:::info BİLGİ
+`ec_recover()` fonksiyonu Sway kütüphanesinde aşağıdaki gibi tanımlıdır:
+
+```js
+pub fn ec_recover(signature: B512, msg_hash: b256) -> Result<B512, EcRecoverError> {}
+```
+:::
+
+Bu fonksiyon iki parametre kabul eder, birincisi `signature` yani imza verisi, ikincisi ise `msg_hash` yani bir mesajın hash değeri. Kendi içerisinde yaptığı 
+işlemlerden sonra geriye `Result<T, E>` içerisinde `B512` tipinde açık anahtarı (public key) ya da hata mesajını döndürür.
+
+
+Son olarak, `ec_recover_address()` fonksiyonu kullanılarak imza verisinden blokzincir adresi elde ediliyor. Yine `Result<T, E>` tipinde fonksiyondan geriye döndürülen
+sonuç bir sonraki aşamada işlenerek adres başarılı bir şekilde oluşturulmuşsa bu adres değeri loglanıyor, yani `log()` metodu ile çıktısı gösteriliyor, aksi halde ise
+`revert()` ile programın işleyişi durduruluyor.
+
+## Kontrat Storage
+
+Bir akıllı kontrat (sözleşme) geliştirirken, bazı veriler için kalıcı bir depolama sistemine ihtiyaç duyulur. Bu kalıcı depolama birimi, bellekte tutulan veriler gibi
+değillerdir, çünkü bellekte tutulan veriler eğer programdan çıkılırsa silinir ancak kalıcı depolama biriminde tutulan veriler silinmezler. `Kontrat Storage`ya da sadece
+`storage` olarak adlandırılan bu veri depolama birimi akıllı kontrat geliştirirken bir kullanıcının adres bilgisi ya da bir cüzdandaki bakiye bilgisi vb. gibi verileri
+kalıcı olarak saklamak için kullanılır.
+
+Verileri storage kontrat storage da tutmak için `storage` anahtar sözcüğü ile bu veri saklama birimi başlatılır ve içerisine verilerin adları, tipleri ve başlangıç değerleri
+yazılır.
+
+```js
+struct Foo {
+    x: u64,
+    y: u64,
+}
+
+struct Bar {
+    a: b256,
+    b: bool,
+}
+
+storage {
+    var1: Foo = Foo { x: 3, y: 5 },
+    var2: Bar = Bar {
+        a: 0x0000000000000000000000000000000000000000000000000000000000000000,
+        b: true,
+    },
+}
+```
+Yukarıda iki farklı struct tanımlanmış ve `storage` anahtar sözcüğü ile başlatılan saklama biriminde iki değişken oluşturulup bu iki farklı struct tipi 
+ve başlangıç değerleri de bu değişkenlere atanmış.
+
+Storage içerisindeki verileri okumak (read) yani verilere erişebilmek için aşağıdaki gibi `read` ataması yapılır:
+
+```js
+#[storage(read)]
+fn get_data() -> (u64, u64, b256, bool) {
+    (
+        storage.var1.x,
+        storage.var1.y,
+        storage.var2.a,
+        storage.var2.b,
+    )
+}
+```
+
+Storage içerisindeki verileri yazmak (write) yani veriler üzerinde değişiklik yapabilmek için ise aşağıdaki gibi `write` ataması yapılır: 
+
+```js
+    #[storage(write)]
+    fn store_something() {
+        storage.var1.x = 4;
+        storage.var1.y = 7;
+        storage.var2.a = 0x1111111111111111111111111111111111111111111111111111111111111111;
+        storage.var2.b = false;
+    }
+```
+
+### Manuel Storage Yönetimi
+
+Fuel standard kütüphanesinin sağladığı iki storage fonksiyonu olan `std::storage::store` ve `std::storage::get` ile manuel olarak storage üzerinde işlemler
+yapılabilir. Aşağıdaki kod örneği ile bunu görelim:
+
+```js
+contract;
+
+use std::storage::{get, store};
+
+abi MyStorage {
+    #[storage(write)]
+    fn store_sth(amount: u64);
+
+    #[storage(read)]
+    fn get_sth() -> u64;
+}
+
+const STORAGE_KEY: b256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
+
+impl MyStorage for Contract {
+    #[storage(write)]
+    fn store_sth(amount: u64) {
+        store(STORAGE_KEY, amount);
+    }
+
+    #[storage(read)]
+    fn get_sth() -> u64 {
+        let val: Option<u64> = get::<u64>(STORAGE_KEY);
+        value.unwrap_or(0)
+    }
+}
+```
+Bu kod örneğinde bir `abi` oluşturulduktan sonra `impl` ile implement edilip `store_sth()` adlı fonksiyonla `STORAGE_KEY` değeri manuel olarak Storage'a yazdırılıyor.
+`get_sth()` adlı fonksiyonun ise `read` ile Storage'a okuma izni mevcut, böylece `get()` fonksiyonu ile veriyi okuyabiliyor ve `Option<T>` döndürüldüğü için
+`unwrap_or()` ile değeri çıkarılıp fonksiyondan geriye döndürülüyor. 
+
+## Pure (Yalın) Fonksiyonlar
+
+Eğer bir fonksiyonun `storage` verilerine erişimi yoksa ona `pure` yani `yalın` fonksiyon denilir. Tam tersi düşünülürse yani fonksiyonun storage verilerine erişimi 
+varsa ona `impure` yani yalın olmayan fonksiyon denilir. Benzer bir yapı Solidity dilinde de mevcuttur, ancak orada `storage` yerine `state` ifadesi kullanılır.
+Storage erişimi yalnızca kontrat programlarında mümkün olduğundan ötürü `predicate`, `script` ve `library` programlarında kullanılan fonksiyonlar pure (yalın) fonksiyonlardır.
+
+Sway programlama dilinde fonksiyonlar varsayılan olarak yalındır. Bununla birlikte, yalın olmayan fonksiyon oluşturmak için `storage` anahtar sözcüğü ataması ile
+fonksiyon yalın formuna geçirilebilir.
+
+```js 
+#[storage(read)]
+fn get_price() -> u64 {
+    ...
+}
+
+#[storage(read, write)]
+fn increment_price(value: u64) -> u64 {
+    ...
+}
+```
+
+Yukarıda görüldüğü üzere,iki farklı fonksiyon var, bunlardan `get_price` adlı fonksiyon fiyat bilgisini getiriyor, `increment_price` adlı fonksiyon ise fiyatın 
+arttırılmasını sağlıyor. Getirilen fiyat değerleri ise kontratın `storage` ögesinde tutulmakta, dolayısıyla bu iki fonksiyonun `storage` erişimi olması gerekli.
+Bunun için fonksiyon tanımı üzerinde `#[storage()]` ifadesi ile erişim sağlanır ve hangi erişim izni olması gerekiyorsa o izinler atanır, yani eğer 
+`storage` verileri sadece okunacak ama değiştirilmeyecekse `#[storage(read)]` yazılır, eğer veriler değiştirilecekse `#[storage(read, write)]` yazılır. Böylelikle 
+varsayılan olarak `yalın` olan bir fonksiyonları yalın olmayan (impure) özelliğine geçirmiş oluruz. 
+
+Yalın olmayan fonksiyonlar yalın olmayan başka fonksiyonları çağırırken aynı `storage` erişim izinlerine sahip olmalı ya da bir üst seviye izinleri olmalıdır.
+Örneğin, eğer birinin `read` izni varsa ötekinin de `read` izni olmalı ya da hem `read` hem de `write` izni olmalıdır. 
+
+:::info BİLGİ
+`#[storage()]` özelliği metotlarda, ilişkisel fonksiyonlarda, trait ve ABI tanımlamalarında kullanılabilir. Örneğin:
+
+```js
+abi Escrow {
+    #[storage(read,write)]
+    fn deposit(id: u64) { // ... }
+    // ...
+}
+```
+:::
+
+## Tanımlayıcılar (Identifier)
+
+Bir cüzdan, kontrat, işlem (transaction) vb şeyleri birbirinden ayırt etmek için tanımlayıcılar yani kısaca `id` ler kullanabiliriz. Sway de tanımlayıcı ögelerden
+biri olan `address`' ler EVM'dekilere benzerdir özellikle iki yönden farklıdır: 
+
+- Sway `address`' leri 32 bayt uzunluğundadır, EVM'de ise 20 bayttır.
+- Sway `SHA-256` hash fonksiyonunu, EVM ise `keccak256` hash fonksiyonunu kullanır.
+
+Sway'de kontratlar ise `address` yerine 32 bayt uzunluğunda bir `kontrat ID` ile tanımlanırlar. Bu kontrat ID özel bir hesaplama yöntemiyle elde edilir. 
+
+:::note NOT
+Kontrat ID hesaplaması için [buraya](http://specs.fuel.network/master/protocol/id/contract) göz atabilirsiniz.
+:::
+
+## Yerel Varlıklar
+
+Fuel VM, birden çok kripto varlık ile çalışma konusunda yerleşik özelliklere sahiptir. Örneğin, bir adrese ya da kontrata ETH göndermek için bazı token 
+akıllı kontratlarının varlığına ihtiyaç duymadan bu işlevi yerine getirebilir. Bu herhangi bir yerel varlık için de geçerlidir, yani herhangi bir değiştirilebilir
+tokeni (fungible token) göndermek ya da almak için token kontratlarına gerek yoktur. Ancak token yakmak (burn) ya da token basmak (mint) gibi işlemler için 
+akıllı kontratlara gerek duyulur.
+
+Fuel'de bulunan bütün kontratlar kendi yerel varlıklarını yakabilir ya da basabilirler, kendi yerel varlıkları yanında herhangi bir yerel varlığı da alabilir ve
+transfer edebilirler.Fuel standard kütüphanesinde yerel varlıklarla ilgili bunun gibi işlemler için oldukça kullanışlı metotlar mevcuttur. 

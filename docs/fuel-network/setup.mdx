@@ -1,0 +1,305 @@
+---
+sidebar_position: 2
+---
+# Fuel ile Çalışmak
+
+Fuel Network üzerinde geliştirme yapabilmek için birçok araç mevcut olmakla birlikte üç temel araç ön plana çıkmaktadır. Bunlar:
+
+- Sway Language: Fuel VM üzerinde akıllı kontrat geliştirmek için kullanılır.
+- Rust SDK: Sway ile yazılan kontratları derlemek, yayımlamak ve test etmek için kullanılır.
+- TypeScript SDK: Kontratlarla etkileşime girmek, işlemleri, bakiyeleri vb listelemek gibi çeşitli amaçlar için kullanılır.
+
+## Kurulum
+
+Fuel ile geliştirmeye başlamak için gerekli araçların kurulumu yapılmalıdır. "fuelup" adı verilen resmi paket yöneticisi ile bu araçları
+tek seferde kurmak mümkündür. Sway programlama dili ile yazılacak uygulamaları geliştirmeye olanak sağlayan araçlar da "fuelup" ile birlikte bilgisayarınıza kurulur.
+
+Sway programlama dili ile geliştirmeye başlamak için bilgisayarınızda Rust'ın yüklü olması gerekmektedir. Rust'ı yüklemek için aşağıdaki komutu herhangi bir
+Linux terminalinde (MacOS, Ubuntu, WSL vb.) çalıştırarak Rust'ı ve Rust geliştirici araçlarını kurabilirsiniz.
+
+```js
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+Aşağıdaki komutu kopyalayıp kullandığınız Linux terminalinde (MacOS, Ubuntu, WSL vb.) çalıştırarak Fuel geliştirme araçlarının kurulumunu başlatabilirsiniz:
+
+```js
+curl --proto '=https' --tlsv1.2 -sSf https://install.fuel.network/fuelup-init.sh | sh
+```
+
+Bu komutlar bilgisayarınıza `forc`, `forc-client`, `forc-fmt`, `forc-lsp`, `forc-wallet` ve `fuel-core` adlı araçlar `~/.fuelup/bin` konumuna kurulur. Kurulum esnasında
+dosyanın `PATH` yolunu ortam değişkenlerine eklemek isteyip istemediğiniz sorulur ve onay verilmesi dahilinde otomatik olarak eklenir. Özel bir durumunuz olmadıkça
+buna izin vermeniz gerekmektedir, yoksa manuel olarak eklemek zorunda kalabilirsiniz.
+
+:::info BİLGİ
+"Fuel Orchestrator" kısaltması olan `forc` Rust'taki Cargo ile aynı işlevlere sahip olan, Sway projelerinizi oluşturmaya, build etmeye, test etmeye ve
+deploy etmeye (yayınlamaya) yarayan bir araçtır.
+:::
+
+Kurulum bittikten sonra aşağıdaki komutları çalıştırarak bütün araçların kurulu olduğundan emin olun:
+
+```js
+fuelup --version
+forc --version
+fuel-core --version
+forc-deploy --version
+forc-fmt --version
+forc-lsp --version
+forc-run --version
+```
+
+:::info BİLGİ
+Fuel çalışma ortamı resmi olarak Windows'u desteklememektedir. Eğer Windows kullanıcısıysanız Fuel araçlarını
+WSL ortamına yükleyerek geliştirmeye başlayabilirsiniz. WSL kurulumu için [buraya](https://learn.microsoft.com/en-us/windows/wsl/install) göz atın.
+:::
+
+Fuel geliştirme araçlarını güncellemek için aşağıdaki komutu çalıştırın:
+
+```js
+fuelup self update
+```
+
+Rust geliştirici araçlarını güncellemek için ise aşağıdaki komutu kullanın:
+
+```js
+rustup update
+```
+
+## Sway Program Türleri
+
+Sway ile oluşturulan programlar dört farklı türdedir, bunlar:
+
+- contract
+- predicate
+- script
+- library
+
+"contract" bir transaction (işlem) ile blokzincire deploy edilen (yayınlanan) ve bytecode'lardan oluşan bir programdır, yani bir akıllı kontrattır.
+"predicate" bir Boolean değer döndüren ve kontrat verilerine erişemeyen bir program türüdür.
+"script" zincir üzerinde çalıştırılabilen ve bir takım görevleri yerine getiren bir bytecode'dur.
+"library" ortak işlevsellik içeren programların yazıldığı dosyalardır.
+
+Program türlerini ayrı bir bölümde ayrıntılı olarak ele alacağız.
+
+### Bytecode nedir?
+
+Sway ile yazılan kodları insanlar anlayabilir ancak bilgisayarlar anlayamaz. Bilgisayarların anlayabileceği kodlar 1 ve 0 değerlerinden oluşan ve "makine kodu"
+adı verilen kodlardır. Sway kodlarını makine koduna dönüştürmek için ilk önce bu kodlar compile edilir yani derlenir, derleme işleminden sonra oluşan ve makine koduna
+benzeyen bu kodlara "bytecode" denilir. Makine koduna yakın ve insanların anlaması zor yapıda bir koddur ama dediğimiz gibi henüz makine kodu değildir, bir ara koddur.
+Son bir aşama ile bu bytecode'lar "interpreter (yorumlayıcı)" denilen bir araçla, işletim sistemi ve bilgisayar mimarisi ne ise ona uygun şekilde tekrar
+dönüştürülerek makine kodları elde edilir. Yani aynı bytecode farklı mimarideki bilgisayarlarda farklı yorumlanarak makine koduna dönüştürülür. Örneğin, aynı bytecode
+MacOS işletim sistemine sahip M2 çipli bilgisayarda farklı yorumlanır, Intel işlemcili bir Windows bilgisayarda farklı yorumlanır ve makine koduna dönüştürülür.
+
+Aşağıdaki diyagramda bu sürecin özetini inceleyebilirsiniz:
+
+<div style={{width:'100%', display:'flex', justifyContent:'center', margin:'60px 0'}}>
+<img
+  src={require('./bytecodediagram.png').default}
+  alt="bytecode diagram"
+  width="700"
+/>
+</div>
+
+## Sway Projesi Oluşturmak
+
+Forc, Sway'in temel geliştirici aracıdır. Bir Sway projesi oluşturmak için `forc new` komutu kullanılır.
+Bu komuttan sonra proje adı yazılarak çalıştırıldığında Forc sizin için bir proje dosyası oluşturur.
+Örneğin "fuel-project" adında bir proje başlatmak için aşağıdaki kodu terminalde çalıştırın:
+
+```js
+forc new fuel-project
+```
+
+Oluşturulan projenin dosya yapısı aşağıdaki gibidir:
+
+```bash
+└─ fuel-project
+  ├── src
+  │  └── main.sw
+  ├── .gitignore
+  └── Forc.toml
+```
+
+Dikkat edilirse Sway proje dosyasının yapısı Cargo ile oluşturulan bir Rust projesine çok benzemektedir. "src" klasörü içerisinde kaynak kodlarını barındırır.
+Sway kodları "main.sw" dosyasından da anlaşılacağı üzere `.sw` uzantılı olarak oluşturulurlar. `Forc.toml` dosyası da tıpkı Cargo.toml gibi içerisinde
+projeye air bilgilerin ve bağımlılıkların tutulduğu manifest dosyasıdır. Bu dosyanın proje ilk oluşturulduğundaki şekli şöyledir:
+
+```js
+[project]
+authors = ["user"]
+entry = "main.sw"
+license = "Apache-2.0"
+name = "fuel-project"
+
+[dependencies]
+```
+`[project]` bölümü bir Sway projesini tanımlar. Bu bölümde proje ile ilgili birtakım bilgiler yazılıdır:
+- **authors** projenin yazarını tanımlar. "user" kısmında proje yazarının adı yazılıdır.
+- **entry** derleyicinin hangi dosyadan işleme başlayacağını belirtir.
+- **license** projenin lisans bilgilerini tanımlar.
+- **name** projenin adını tanımlar.
+
+`[dependencies]` bölümünde projenin bağımlılıkları tanımlanır. Örneğin dışarıdan projeye dahil edilen bir paketin bilgisi burada tutulur.
+
+`main.sw` adlı dosyayı bir kod editöründe (örneğin VS Code vb.) açtığımızda aşağıdaki başlangıç kodlarını görürüz:
+
+```js title="main.sw"
+contract;
+
+abi MyContract {
+    fn test_function() -> bool;
+}
+
+impl MyContract for Contract {
+    fn test_function() -> bool {
+        true
+    }
+}
+```
+## Sway ile İlk Akıllı Kontratımızı Yazma
+
+Hızlı bir giriş yaparak ilk sözleşmemizi oluşturmak için bu başlangıç kodlarını silerek sıfırdan bir program yazmaya başlayalım.
+
+Her Sway dosyası, o dosya içerisindeki kodların ne tür bir program olduğunu belirten bir tanımlama ifadesi ile başlar. Yazacağımız
+program bir sözleşme (kontrat) olduğundan ilk satıra `contract` yazıyoruz.
+
+```js title="main.sw"
+contract;
+```
+
+Bir sonraki aşamada `storage` anahtar sözcüğü ile kontratımızın verilerini tuttuğumuz bir yer tanımlıyoruz. Bu kontratta "counter" adında tek
+bir değişken tanımlayacağız:
+
+```js title="main.sw"
+storage {
+  counter: u64 = 0,
+}
+```
+
+Şimdi bir ABI tanımlayalım. `abi` anahtar sözcüğü ile bir interface (arayüz) tanımlaması yapılır, içerisinde fonksiyonların kendisi tanımlanır
+ancak gövdesi tanımlanmaz. Bu tanımlanan fonksiyonların gövdesi ayrı bir yerde implement edilerek (işlenerek) tanımlanır.
+Bir kontratta mutlaka bir ABI tanımlaması yapılmalı ve implement edilmelidir ya da tanımlı olduğu diğer dosyalardan çağrılabilir.
+ABI tanımlamasının ayrı bir "library (kütüphane)" dosyasında yapılması ve kontrat kodlarına dışarıdan dahil edilmesi her zaman
+en yaygın kullanılan şeklidir. Bu konuya daha ileride tekrar değineceğiz. ABI tanımlamak için için `abi` anahtar sözcüğü yazıldıktan sonra baş harfi büyük
+olacak şekilde adı yazılır ve süslü parantez {} açılarak ABI gövdesi tanımlanır.
+
+```js title="main.sw"
+abi Counter {
+    #[storage(read, write)]
+    fn increment();
+
+    #[storage(read)]
+    fn counter() -> u64;
+}
+```
+ABI içerisindeki kodları teker teker inceleyelim:
+
+- **#[storage(read,write)]** ifadesi hemen altında tanımlanan "increment" adlı fonksiyonun `storage` içerisinde tanımlanan değerlere erişim izni
+olduğunu tanımlamak için kullanılan bir belirteçtir. `read` verileri okuma izni vermek için, `write` ise verileri değiştirme izni vermek için
+kullanılır. O halde "increment" adlı fonksiyonun `storage` içerisindeki verileri hem okuma hem de değiştirme yetkisi vardır.
+
+- **fn increment();** burada `fn` anahtar sözcüğü ile "increment" adlı bir fonksiyon tanımladık ve daha önce de dediğimiz gibi fonksiyon gövdesini ABI
+içerisinde tanımlamadık.
+
+- **#[storage(read)]** ifadesi ile hemen altında tanımlanan "counter" adlı fonksiyona `storage` içerisindeki verileri sadece okuyabilme yetkisi tanımladık.
+Yani bu fonksiyonun `storage` içerisindeki verileri değiştirme izni yok.
+
+- **fn counter() -> u64;** ifadesi ile yine bir fonksiyon tanımladık ve bu fonksiyonun return ettiği (döndürdüğü) `u64` tipinde bir değer olduğunu
+tıpkı Rust'ta yaptığımız gibi `-> u64` yazarak tanımladık.
+
+Şimdi tanımladığımız bu arayüzü implement edelim, yani içerisinde bulunan fonksiyonların gövdelerini tanımlayarak işlevselliğini oluşturalım.
+
+```js title="main.sw"
+impl Counter for Contract {
+
+    #[storage(read, write)]
+    fn increment() {
+        storage.counter = storage.counter + 1;
+    }
+
+    #[storage(read)]
+    fn counter() -> u64 {
+      return storage.counter;
+    }
+}
+```
+Yukarıdaki kodlarda `implement` anahtar sözcüğünü ve ardından implement edeceğimiz ABI adını yazıp onu kontratımız için implement ettiğimizi `for Contract`
+ifadesi ile belirttik. Dikkat edilirse ABI tanımlaması yaptığımız kodların aynısını implement ederken de yazıyoruz, implement etme aşamasında sadece
+içini doldurmadığımız fonksiyon gövdelerini tanımlıyoruz.
+
+```js
+#[storage(read, write)]
+    fn increment() {
+        storage.counter = storage.counter + 1;
+    }
+```
+
+Yukarıda "increment" adlı fonksiyonun `storage` içerisindeki "counter" değişkenine erişebilme yetkisi olduğundan değerini bir arttırdık.
+
+```js
+#[storage(read)]
+    fn counter() -> u64 {
+      return storage.counter;
+    }
+```
+
+Yukarıdaki kodda ise `storage` içerisindeki "counter" değişkenini okuma yetkimiz olduğundan o veriye erişip değerini return ettik. Şimdi buraya
+kadar yazdığımız bütün kodlara topluca bir bakalım:
+
+```js title="main.sw"
+contract;
+
+storage {
+    counter: u64 = 0,
+}
+
+abi Counter {
+    #[storage(read, write)]
+    fn increment();
+
+    #[storage(read)]
+    fn count() -> u64;
+}
+
+impl Counter for Contract {
+
+    #[storage(read)]
+    fn count() -> u64 {
+        storage.counter
+    }
+
+    #[storage(read, write)]
+    fn increment() {
+        storage.counter = storage.counter + 1;
+    }
+}
+```
+
+
+Artık kontratımız "build" edilmeye hazır. Bunun için aşağıdaki komutu çalıştırıyoruz:
+
+```js
+forc build
+```
+
+Kontratımız hatasız bir şekilde build edildikten sonra dosya ağacında `out` adında yeni bir klasör oluşur, bu klasör içerisinde
+kontratımızın bytecode'unu ve ABI'nin "json" formatında oluşturulmuş halini içeren bir çıktı klasörüdür. Artık kontratımızı deploy edebiliriz,
+bunun için ilk önce ayrı bir terminalde aşağıdaki komutu çalıştırarak lokalde bir Fuel node (düğüm) başlatalım:
+
+```js
+fuel-core run --db-type in-memory
+```
+
+Komutu çalıştırdıktan sonra lokalde bir Fuel node'u başlatılır, test amaçlı kullanılmak adına iyidir çünkü kapatıldıktan sonra içerisindeki verileri temizler.
+Kontratımızı deploy etmek için aşağıdaki komutu fuel node çalıştırdığınız terminali kapatmayarak ondan ayrı yeni bir terminal açıp çalıştırın:
+
+```js
+forc deploy --unsigned
+```
+
+Deploy işlemi başarılı bir şekilde sonuçlandığında çıktı olarak size bir "contract id" verilir, bu id kullanılarak deploy edilen kontrat ile iletişim
+kurulabilir.
+
+Tebrikler! Sway ile ilk kontratınızı yazdınız ve lokalde kurduğunuz Fuel node'a deploy ettiniz. Bundan sonraki aşamalarda yapılabilecek şeylerden biri
+kontratımız için test kodu yazmak ve deploy etmeden önce doğru çalışıp çalışmadığını test edebilmek, ikincisi ise lokaldeki node'a deploy etmek yerine
+Fuel testnet'e deploy etmek. Bu aşamaları daha sonraki bölümlerde ele alacağız.

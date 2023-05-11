@@ -6,12 +6,12 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Ethereum Developer Resources',
-  tagline: 'Ethereum Developer Resource in Turkish',
+  title: 'Ethereum Smart Contract Developer Course',
+  tagline: 'Ethereum Smart Contract Developer Course - TR',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-test-site.com',
+  url: 'https://smart-contract-developer-course-tr.vercel.app/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -19,7 +19,7 @@ const config = {
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'edakturk14', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  projectName: 'smart-contract-developer-course-tr', // Usually your repo name.
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -41,7 +41,7 @@ const config = {
           sidebarPath: require.resolve('./sidebars.js'),
           routeBasePath: '/', // Serve the docs at the site's root
           editUrl:
-            'https://github.com/edakturk14/ethereum-developer-bootcamp-tr',
+            'https://github.com/edakturk14/smart-contract-developer-course-tr',
         },
         blog: false,
         theme: {
@@ -57,10 +57,10 @@ const config = {
       // Replace with your project's social card
       //image: 'img/docusaurus-social-card.jpg',
       navbar: {
-        title: 'Ethereum Developer Bootcamp',
+        title: 'Ethereum Smart Contract Developer Course',
         items: [
           {
-            href: 'https://github.com/edakturk14/ethereum-developer-bootcamp-tr',
+            href: 'https://github.com/edakturk14/smart-contract-developer-course-tr',
             label: 'GitHub',
             position: 'right',
           },
@@ -68,7 +68,7 @@ const config = {
       },
       footer: {
         style: 'dark',
-        copyright: `Copyright © ${new Date().getFullYear()} Ethereum Developer Bootcamp-TR, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Ethereum Smart Contract Developer Course-TR, Inc. Built with Docusaurus.`,
       },
       prism: {
         theme: lightCodeTheme,

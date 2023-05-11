@@ -42,6 +42,6 @@ If you are using GitHub pages for hosting, this command is a convenient way to b
 
 ### Contributing
 
-We welcome contributions to Ethereum Developer Bootcamp - TR!
+We welcome contributions to Ethereum Smart Contract Developer Course - TR!
 
-Please see CONTRIBUTING.MD for more information and guidelines.
+Please see CONTRIBUTING.MD for more info and guidelines.

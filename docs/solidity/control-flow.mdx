@@ -360,7 +360,7 @@ contract HelloWorld {
   function doSome(uint256 _number) public {
      if(_number < 10){
         revert WrongNumber();
-         // emit WrongNumber(_number, msg.sender);
+         // revert WrongNumber(_number, msg.sender);
      }
   }
 }

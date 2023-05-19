@@ -66,7 +66,9 @@ if (myAddress.balance >= 10) {
 Bu nedenle, bir referans tipi kullanmak istediğimizde bu tipin tutulacağı veri konumu da açık bir şekilde belirtmemiz gerekiyor. Peki veri konumundan kastımız ne? Solidity'de 3 adet veri konumu türü var: `memory`, `storage` ve `calldata`.
 
 `memory`: Bu konumdaki verilerin ömrü dışarıdan bir fonksiyon çağrılması ile sınırlıdır.
+
 `storage`: Durum değişkenlerinin tutulduğu konumdur ve bu konumdaki verilerin ömrü kontratın ömrü ile sınırlıdır.
+
 `calldata`: Bu özel veri konumu, fonksiyon argümanlarını içerir.
 
 ### Diziler (Arrays)
@@ -88,9 +90,9 @@ contract Arrays {
 
 **Dizilerin Ögeleri:**
 
-`length`: Bir dizinin boyutunu döndürür. Örnek: `myArray.length`
-`push()`: Bir dizinin en sonuna yeni bir eleman eklemenizi sağlar. Örnek: `myArray.push() = 4`
-`pop()`: Bir dizinin son elementini diziden çıkarmanızı sağlar. Örnek: `myArray.pop()`
+- `length`: Bir dizinin boyutunu döndürür. Örnek: `myArray.length`
+- `push()`: Bir dizinin en sonuna yeni bir eleman eklemenizi sağlar. Örnek: `myArray.push() = 4`
+- `pop()`: Bir dizinin son elementini diziden çıkarmanızı sağlar. Örnek: `myArray.pop()`
 
 ### Eşlemeler (Mappings)
 
@@ -317,6 +319,53 @@ contract Loops {
   }
 }
 ```
+
+### Hata yönetimi
+
+Solidity'de hatalar iki şekilde yönetilebilir
+
+- `require` ilk parametresi `true` bir mantık içermelidir. Eğer koşul sağlanırsa kod yürütülmeye devam eder, aksi takdirde `require` bir hata fırlatır ve işlem başarısız olur. **require** ayrıca, hataya dair mesajları ikinci parametresinde bir **string** ile döndürebilir.
+
+- `Custom errors`
+
+### require
+
+**Söz dizimi şöyledir:**
+
+```solidity
+require(Koşul, [isteğe bağlı hata mesajı])
+```
+
+```solidity
+contract HelloWorld {
+
+  function doSome(uint256 _number) public {
+    require(_number > 10, "Girilen sayı 10dan büyük olmalıdır");
+  }
+}
+```
+
+### Custom errors
+
+Solidity, geliştiricilere akıllı sözleşme içerisinde özel hata tanımlamalarına izin verir.
+
+Özel tanımlı hatalar `error` keywordü ile başlar. Hata, `revert` ile tetiklenir. Bu çalışma şekli eventlara benzerdir.
+
+```solidity
+contract HelloWorld {
+  
+   error WrongNumber();
+  // error WrongNumber(uint256, address);
+ 
+  function doSome(uint256 _number) public {
+     if(_number < 10){
+        revert WrongNumber();
+         // revert WrongNumber(_number, msg.sender);
+     }
+  }
+}
+```
+
 
 ## Constructor
 
